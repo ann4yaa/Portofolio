@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import Navbar from '../components/Navbar';
+import DOMPurify from 'dompurify'; // 🔒 TAMBAHKAN INI
 
 const nama = 'Hagia Sofiana';
 const tentang =
@@ -28,18 +29,44 @@ export default function Home() {
     window.scrollTo(0, 0);
   }, []);
 
+  // 🔒 FETCH DENGAN VALIDASI DATA
   useEffect(() => {
-    fetch('/data.json')
+    fetch('/assets/data.json')
       .then((r) => {
         if (!r.ok) throw new Error(`HTTP error! status: ${r.status}`);
         return r.json();
       })
       .then((data) => {
         console.log('✅ Data dari JSON:', data);
-        if (data && data.projects) {
-          const recent = data.projects.slice(0, 3);
+        
+        // ===== VALIDASI DATA =====
+        if (!data || typeof data !== 'object') {
+          throw new Error('Data tidak valid');
+        }
+        
+        if (!Array.isArray(data.projects)) {
+          data.projects = [];
+        }
+        
+        // Validasi setiap project
+        const validProjects = data.projects.filter(p => {
+          return (
+            typeof p === 'object' &&
+            p !== null &&
+            typeof p.id === 'number' &&
+            typeof p.nama_project === 'string' &&
+            p.nama_project.length > 0 &&
+            typeof p.deskripsi === 'string' &&
+            Array.isArray(p.teknologi)
+          );
+        });
+        
+        console.log('✅ Data valid:', validProjects.length, 'project');
+        
+        if (validProjects.length > 0) {
+          const recent = validProjects.slice(0, 3);
           setRecentProjects(recent);
-          setTotalProject(data.projects.length);
+          setTotalProject(validProjects.length);
         } else {
           setRecentProjects([]);
           setTotalProject(0);
@@ -84,7 +111,7 @@ export default function Home() {
       },
       { threshold: 0.1, rootMargin: '0px 0px -50px 0px' }
     );
-    
+
     cardRefs.current.forEach((el) => {
       if (el) {
         el.style.opacity = '0';
@@ -100,18 +127,18 @@ export default function Home() {
     return (
       <>
         <Navbar />
-        <div style={{ 
-          display: 'flex', 
-          justifyContent: 'center', 
-          alignItems: 'center', 
+        <div style={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
           minHeight: '100vh',
           color: '#3d251a',
           fontSize: '1.2rem'
         }}>
           <div style={{ textAlign: 'center' }}>
-            <div style={{ 
-              width: '40px', 
-              height: '40px', 
+            <div style={{
+              width: '40px',
+              height: '40px',
               border: '4px solid #c98545',
               borderTopColor: 'transparent',
               borderRadius: '50%',
@@ -422,6 +449,72 @@ export default function Home() {
           transform: scale(1.04);
           border-color: rgba(253,246,238,0.15);
         }
+
+        /* ================================================================ */
+/* ========== NONAKTIFKAN ANIMASI DI MOBILE & TABLET ============== */
+/* ================================================================ */
+
+@media (max-width: 992px) {
+  /* Nonaktifkan animasi profile naik turun */
+  .profile-wrapper {
+    animation: none !important;
+  }
+  
+  /* Nonaktifkan animasi border berkilau */
+  .profile-border {
+    animation: none !important;
+  }
+  
+  /* Nonaktifkan animasi glow */
+  .profile-glow {
+    animation: none !important;
+  }
+  
+  /* Nonaktifkan animasi shimmer pada profile */
+  .profile-shimmer {
+    animation: none !important;
+  }
+  
+  /* Nonaktifkan animasi hero glass */
+  .hero-glass {
+    animation: none !important;
+  }
+  
+  /* Nonaktifkan animasi shimmer border hero glass */
+  .hero-glass::before,
+  .hero-glass::after {
+    animation: none !important;
+  }
+  
+  /* Nonaktifkan animasi skill floating */
+  .skill-tag-wrapper {
+    animation: none !important;
+  }
+  
+  /* Nonaktifkan animasi badge pulse */
+  .hero-badge {
+    animation: none !important;
+  }
+  
+  /* Nonaktifkan animasi stat item hover */
+  .stat-item:hover {
+    transform: none !important;
+  }
+  
+  /* Nonaktifkan animasi project card hover */
+  .project-card:hover {
+    transform: none !important;
+  }
+  
+  /* Nonaktifkan animasi shimmer pada button */
+  .btn-primary-custom {
+    animation: none !important;
+  }
+  
+  .btn-primary-custom:hover {
+    animation: none !important;
+  }
+}
 
         /* ================================================================ */
         /* ========== END PROFILE ========================================== */
@@ -1044,8 +1137,9 @@ export default function Home() {
           }
         }
       `}</style>
-      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" />
-      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" />
+      {/* 🔒 HAPUS DUPLIKAT CSS - SUDAH DI INDEX.HTML */}
+      {/* <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" /> */}
+      {/* <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" /> */}
 
       {/* HAPUS leopard-spots-container - diganti background pattern */}
 
@@ -1066,9 +1160,9 @@ export default function Home() {
                   <div className="profile-wrapper">
                     <div className="profile-glow"></div>
                     <div className="profile-border"></div>
-                    <img 
-                      src="/hagia.png" 
-                      alt="Hagia Sofiana" 
+                    <img
+                      src="/assets/hagia.png"
+                      alt="Hagia Sofiana"
                       className="profile-image"
                     />
                     <div className="profile-shimmer"></div>
@@ -1081,16 +1175,16 @@ export default function Home() {
                       Rekayasa Perangkat Lunak
                     </div>
                     <h1 className="hero-title">
-                      <span className="role-text">{roles[roleIndex]}</span><br/>
+                      <span className="role-text">{roles[roleIndex]}</span><br />
                       <span className="highlight">Hagia Sofiana</span>
                     </h1>
                     <p className="hero-subtitle">{tentang}</p>
                     <div className="hero-actions">
                       <Link to="/project" className="btn-primary-custom">
-                        <i className="fas fa-folder-open"></i>Lihat Project
+                        <i className="fas fa-folder-open"></i>View Project
                       </Link>
                       <a href="#skills" className="btn-outline-custom">
-                        <i className="fas fa-code"></i>Skill Saya
+                        <i className="fas fa-code"></i>My Skills
                       </a>
                     </div>
                     <div className="social-links">
@@ -1112,13 +1206,13 @@ export default function Home() {
               <div className="col-6 col-md-3">
                 <div className="stat-item" ref={(el) => { cardRefs.current[0] = el; }}>
                   <div className="stat-number">{totalProject}+</div>
-                  <div className="stat-label">Total Project</div>
+                  <div className="stat-label">Projects Completed</div>
                 </div>
               </div>
               <div className="col-6 col-md-3">
                 <div className="stat-item" ref={(el) => { cardRefs.current[1] = el; }}>
                   <div className="stat-number">{skills.length}+</div>
-                  <div className="stat-label">Teknologi</div>
+                  <div className="stat-label">Tech Stack</div>
                 </div>
               </div>
             </div>
@@ -1128,9 +1222,9 @@ export default function Home() {
         <section style={{ padding: '3.5rem 0' }} id="skills">
           <div className="container">
             <div className="text-center">
-              <h2 className="section-title">Teknologi yang <span className="gradient-text">Dikuasai</span></h2>
+              <h2 className="section-title">Tech <span className="gradient-text">Stack</span></h2>
               <div className="section-divider"></div>
-              <p className="section-subtitle">Stack teknologi yang saya gunakan dalam pengembangan web</p>
+              <p className="section-subtitle">Building with Modern Technologies</p>
             </div>
             <div className="text-center">
               {skills.map((skill, i) => {
@@ -1162,24 +1256,24 @@ export default function Home() {
         <section style={{ padding: '3.5rem 0' }}>
           <div className="container">
             <div className="text-center">
-              <h2 className="section-title">Project <span className="gradient-text">Terbaru</span></h2>
+              <h2 className="section-title">Latest <span className="gradient-text">Project</span></h2>
               <div className="section-divider"></div>
-              <p className="section-subtitle">Beberapa project yang telah saya kerjakan</p>
+              <p className="section-subtitle">Some of the projects I've worked on</p>
             </div>
 
             {recentProjects.length > 0 ? (
               <>
                 <div className="row g-4">
                   {recentProjects.map((project, i) => {
-                    const teknologiList = Array.isArray(project.teknologi) 
-                      ? project.teknologi 
+                    const teknologiList = Array.isArray(project.teknologi)
+                      ? project.teknologi
                       : (project.teknologi ? project.teknologi.split('|') : []);
-                    
+
                     return (
                       <div className="col-md-4 col-sm-6 col-12" key={project.id}>
                         <div className="project-card h-100" ref={(el) => { cardRefs.current[i + 12] = el; }}>
                           {project.gambar ? (
-                            <img src={`/uploads/${project.gambar}`} alt={project.nama_project} className="project-card-img" />
+                            <img src={`/assets/uploads/${project.gambar}`} alt={project.nama_project} className="project-card-img" />
                           ) : (
                             <div className="project-card-img d-flex align-items-center justify-content-center"
                               style={{ background: 'linear-gradient(145deg,#f5e8d8 0%,#fdf6ee 100%)' }}>
@@ -1187,11 +1281,18 @@ export default function Home() {
                             </div>
                           )}
                           <div className="project-card-body">
-                            <h5 className="project-card-title">{project.nama_project}</h5>
-                            <p className="project-card-desc">{project.deskripsi}</p>
+                            {/* 🔒 SANITASI DENGAN DOMPurify */}
+                            <h5 className="project-card-title">
+                              {DOMPurify.sanitize(project.nama_project)}
+                            </h5>
+                            <p className="project-card-desc">
+                              {DOMPurify.sanitize(project.deskripsi)}
+                            </p>
                             <div className="project-tech">
                               {teknologiList.slice(0, 3).map((t, j) => (
-                                <span className="project-tech-badge" key={j}>{t}</span>
+                                <span className="project-tech-badge" key={j}>
+                                  {DOMPurify.sanitize(t)}
+                                </span>
                               ))}
                               {teknologiList.length > 3 && (
                                 <span className="project-tech-badge">+{teknologiList.length - 3}</span>
@@ -1199,12 +1300,12 @@ export default function Home() {
                             </div>
                             <div className="project-card-links">
                               {project.github && (
-                                <a href={project.github} target="_blank" rel="noreferrer">
+                                <a href={DOMPurify.sanitize(project.github)} target="_blank" rel="noreferrer">
                                   <i className="fab fa-github me-1"></i><span>GitHub</span>
                                 </a>
                               )}
                               {project.demo && (
-                                <a href={project.demo} target="_blank" rel="noreferrer">
+                                <a href={DOMPurify.sanitize(project.demo)} target="_blank" rel="noreferrer">
                                   <i className="fas fa-external-link-alt me-1"></i><span>Demo</span>
                                 </a>
                               )}
@@ -1217,14 +1318,14 @@ export default function Home() {
                 </div>
                 <div className="text-center mt-4">
                   <Link to="/project" className="btn-primary-custom" style={{ width: 'auto', padding: '0.85rem 2.6rem' }}>
-                    Lihat Semua Project <i className="fas fa-arrow-right ms-2"></i>
+                    View All Projects <i className="fas fa-arrow-right ms-2"></i>
                   </Link>
                 </div>
               </>
             ) : (
               <div className="text-center py-5">
                 <i className="fas fa-inbox" style={{ fontSize: '3rem', color: '#5a3828' }}></i>
-                <p className="text-muted mt-3">Belum ada project.</p>
+                <p className="text-muted mt-3">More projects coming soon</p>
               </div>
             )}
           </div>

@@ -1,0 +1,44 @@
+# Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Environment
+.env
+.env.local
+.env.production
+
+# Build
+build/
+dist/
+*.build/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+
+# OS
+Thumbs.db
+.DS_Store
+
+# Logs
+logs/
+*.log
+
+# Database
+*.sqlite
+*.db
+
+# Backup
+*.backup
+backups/
+
+# Upload sementara (tapi jangan ignore uploads/ karena perlu gambar)
+# Tapi jangan ignore uploads/ karena gambar perlu ditampilkan
+
+# Package-lock (optional, terserah)
+# package-lock.json

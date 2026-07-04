@@ -70,7 +70,7 @@ const generateJSON = () => {
       };
       
       // Tulis ke frontend/public
-      const jsonPath = path.join(__dirname, '../frontend/public/data.json');
+      const jsonPath = path.join(__dirname, '../frontend/public/assets/data.json');
       const dir = path.dirname(jsonPath);
       if (!fs.existsSync(dir)) {
         fs.mkdirSync(dir, { recursive: true });
@@ -88,7 +88,7 @@ const generateJSON = () => {
 // ========================
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    const dir = path.join(__dirname, '../frontend/public/uploads');
+    const dir = path.join(__dirname, '../frontend/public/assets/uploads');
     if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
     cb(null, dir);
   },
@@ -223,7 +223,7 @@ app.put('/api/projects/:id', upload.single('gambar'), (req, res) => {
     if (req.file) {
       newGambar = req.file.filename;
       if (oldGambar) {
-        const oldPath = path.join(__dirname, '../frontend/public/uploads', oldGambar);
+        const oldPath = path.join(__dirname, '../frontend/public/assets/uploads', oldGambar);
         if (fs.existsSync(oldPath)) fs.unlinkSync(oldPath);
       }
     }
@@ -285,7 +285,7 @@ app.delete('/api/projects/:id', (req, res) => {
     const gambar = rows[0].gambar;
 
     if (gambar) {
-      const filePath = path.join(__dirname, '../frontend/public/uploads', gambar);
+      const filePath = path.join(__dirname, '../frontend/public/assets/uploads', gambar);
       if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
     }
 
@@ -306,7 +306,7 @@ app.delete('/api/projects/:id', (req, res) => {
 
 app.get('/api/projects/public', (req, res) => {
   try {
-    const jsonPath = path.join(__dirname, '../frontend/public/data.json');
+    const jsonPath = path.join(__dirname, '../frontend/public/assets/data.json');
     if (fs.existsSync(jsonPath)) {
       const data = JSON.parse(fs.readFileSync(jsonPath, 'utf8'));
       const kategoriId = parseInt(req.query.kategori) || 0;
@@ -335,7 +335,7 @@ app.get('/api/projects/public', (req, res) => {
 
 app.get('/api/projects/recent', (req, res) => {
   try {
-    const jsonPath = path.join(__dirname, '../frontend/public/data.json');
+    const jsonPath = path.join(__dirname, '../frontend/public/assets/data.json');
     if (fs.existsSync(jsonPath)) {
       const data = JSON.parse(fs.readFileSync(jsonPath, 'utf8'));
       res.json(data.projects.slice(0, 3));
@@ -354,7 +354,7 @@ app.get('/api/projects/recent', (req, res) => {
 
 app.get('/api/projects/count', (req, res) => {
   try {
-    const jsonPath = path.join(__dirname, '../frontend/public/data.json');
+    const jsonPath = path.join(__dirname, '../frontend/public/assets/data.json');
     if (fs.existsSync(jsonPath)) {
       const data = JSON.parse(fs.readFileSync(jsonPath, 'utf8'));
       res.json({ total: data.projects.length });
@@ -382,6 +382,6 @@ generateJSON().then(() => {
 
 app.listen(PORT, () => {
   console.log(`Server berjalan di http://localhost:${PORT}`);
-  console.log(`📁 Upload gambar ke: frontend/public/uploads/`);
-  console.log(`📄 Data JSON di: frontend/public/data.json`);
+  console.log(`📁 Upload gambar ke: frontend/public/assets/uploads/`);
+  console.log(`📄 Data JSON di: frontend/public/assets/data.json`);
 });

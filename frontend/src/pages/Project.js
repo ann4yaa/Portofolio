@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import Navbar from '../components/Navbar';
+import DOMPurify from 'dompurify'; // 🔒 TAMBAHKAN INI
 
 export default function Project() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -16,8 +17,9 @@ export default function Project() {
     window.scrollTo(0, 0);
   }, []);
 
+  // 🔒 FETCH DENGAN VALIDASI DATA
   useEffect(() => {
-    fetch('/data.json')
+    fetch('/assets/data.json')
       .then((r) => {
         if (!r.ok) throw new Error(`HTTP error! status: ${r.status}`);
         return r.json();
@@ -25,7 +27,29 @@ export default function Project() {
       .then((data) => {
         console.log('✅ Data dari JSON:', data);
         
-        if (!data || !data.projects) {
+        // ===== VALIDASI DATA =====
+        if (!data || typeof data !== 'object') {
+          throw new Error('Data tidak valid');
+        }
+        
+        if (!Array.isArray(data.projects)) {
+          data.projects = [];
+        }
+        
+        // Validasi setiap project
+        const validProjects = data.projects.filter(p => {
+          return (
+            typeof p === 'object' &&
+            p !== null &&
+            typeof p.id === 'number' &&
+            typeof p.nama_project === 'string' &&
+            p.nama_project.length > 0 &&
+            typeof p.deskripsi === 'string' &&
+            Array.isArray(p.teknologi)
+          );
+        });
+        
+        if (validProjects.length === 0) {
           setProjects([]);
           setKategoriList([]);
           setLoading(false);
@@ -34,8 +58,8 @@ export default function Project() {
         
         // Ambil kategori unik dari data
         const kategoriSet = new Map();
-        data.projects.forEach(p => {
-          if (p.kategori && !kategoriSet.has(p.kategori)) {
+        validProjects.forEach(p => {
+          if (p.kategori && typeof p.kategori === 'string' && !kategoriSet.has(p.kategori)) {
             kategoriSet.set(p.kategori, {
               id: kategoriSet.size + 1,
               kategori: p.kategori
@@ -46,11 +70,11 @@ export default function Project() {
         setKategoriList(kategoriList);
         
         // Filter berdasarkan kategori
-        let filteredProjects = data.projects;
+        let filteredProjects = validProjects;
         if (filterKategori > 0) {
           const selectedKategori = kategoriList.find(k => k.id === filterKategori);
           if (selectedKategori) {
-            filteredProjects = data.projects.filter(p => p.kategori === selectedKategori.kategori);
+            filteredProjects = validProjects.filter(p => p.kategori === selectedKategori.kategori);
           }
         }
         setProjects(filteredProjects);
@@ -535,8 +559,9 @@ export default function Project() {
           .glass-card{padding:1rem}
         }
       `}</style>
-      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" />
-      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" />
+      {/* 🔒 HAPUS DUPLIKAT CSS - SUDAH DI INDEX.HTML */}
+      {/* <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" /> */}
+      {/* <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" /> */}
 
       {/* HAPUS leopard-spots-container - diganti background pattern */}
 
@@ -553,9 +578,9 @@ export default function Project() {
           <div className="page-header-glass">
             <h1 className="page-title">
               <i className="fas fa-folder-open me-2"></i>
-              <span className="gradient-text">Project Portofolio</span>
+              <span className="gradient-text">Portfolio Projects</span>
             </h1>
-            <p className="page-subtitle">Kumpulan project yang telah saya kerjakan</p>
+            <p className="page-subtitle">Explore a collection of projects that showcase my skills, creativity, and passion for software development.</p>
           </div>
 
           <div className="filter-section">
@@ -563,7 +588,7 @@ export default function Project() {
               className={`filter-btn ${filterKategori === 0 ? 'active' : ''}`}
               onClick={() => setSearchParams({})}
             >
-              <i className="fas fa-th me-1"></i>Semua
+              <i className="fas fa-th me-1"></i>All Projects
             </button>
             {kategoriList.map((k) => (
               <button
@@ -571,7 +596,7 @@ export default function Project() {
                 className={`filter-btn ${filterKategori === k.id ? 'active' : ''}`}
                 onClick={() => setSearchParams({ kategori: k.id })}
               >
-                {k.kategori}
+                {DOMPurify.sanitize(k.kategori)}
               </button>
             ))}
           </div>
@@ -587,7 +612,7 @@ export default function Project() {
                   <div className="col-md-6 col-lg-4 col-12" key={project.id}>
                     <div className="project-card" ref={(el) => { cardRefs.current[i] = el; }}>
                       {project.gambar ? (
-                        <img src={`/uploads/${project.gambar}`} alt={project.nama_project} className="project-card-img" />
+                        <img src={`/assets/uploads/${project.gambar}`} alt={project.nama_project} className="project-card-img" />
                       ) : (
                         <div className="project-card-img d-flex align-items-center justify-content-center"
                           style={{ background: 'linear-gradient(145deg,#f5e8d8 0%,#fdf6ee 100%)' }}>
@@ -595,22 +620,31 @@ export default function Project() {
                         </div>
                       )}
                       <div className="project-card-body">
-                        <span className="project-card-title">{project.nama_project}</span>
-                        <span className="project-card-kategori">{project.kategori}</span>
-                        <p className="project-card-desc">{project.deskripsi}</p>
+                        {/* 🔒 SANITASI DENGAN DOMPurify */}
+                        <span className="project-card-title">
+                          {DOMPurify.sanitize(project.nama_project)}
+                        </span>
+                        <span className="project-card-kategori">
+                          {DOMPurify.sanitize(project.kategori)}
+                        </span>
+                        <p className="project-card-desc">
+                          {DOMPurify.sanitize(project.deskripsi)}
+                        </p>
                         <div className="project-tech">
                           {teknologiList.map((t, j) => (
-                            <span className="project-tech-badge" key={j}>{t}</span>
+                            <span className="project-tech-badge" key={j}>
+                              {DOMPurify.sanitize(t)}
+                            </span>
                           ))}
                         </div>
                         <div className="project-card-links">
                           {project.github && (
-                            <a href={project.github} target="_blank" rel="noreferrer">
+                            <a href={DOMPurify.sanitize(project.github)} target="_blank" rel="noreferrer">
                               <i className="fab fa-github me-1"></i><span>GitHub</span>
                             </a>
                           )}
                           {project.demo && (
-                            <a href={project.demo} target="_blank" rel="noreferrer">
+                            <a href={DOMPurify.sanitize(project.demo)} target="_blank" rel="noreferrer">
                               <i className="fas fa-external-link-alt me-1"></i><span>Demo</span>
                             </a>
                           )}
@@ -624,7 +658,7 @@ export default function Project() {
           ) : (
             <div className="glass-card text-center py-5">
               <i className="fas fa-inbox" style={{ fontSize: '4rem', color: '#fbda98' }}></i>
-              <h5 className="mt-3" style={{ color: '#c98545' }}>Belum ada project</h5>
+              <h5 className="mt-3" style={{ color: '#c98545' }}>More projects coming soon</h5>
             </div>
           )}
         </div>

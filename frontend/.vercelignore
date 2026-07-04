@@ -1,0 +1,15 @@
+# JANGAN IGNORE ASSETS!
+# Hanya ignore folder yang tidak perlu
+
+node_modules/
+.git/
+*.log
+.env
+*.md
+!README.md
+.vercel/
+
+# ❌ JANGAN TAMBAHKAN INI:
+# public/assets/
+# *.json
+# *.png

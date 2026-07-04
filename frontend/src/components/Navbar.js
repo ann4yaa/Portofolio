@@ -304,11 +304,11 @@ export default function Navbar() {
           </Link>
 
           <div className="nav-links">
-            <Link to="/" className={`nav-link-premium ${isActive('/') ? 'active' : ''}`}>Beranda</Link>
-            <a href="/#skills" className={`nav-link-premium ${location.pathname === '/' ? '' : ''}`}>Skill</a>
+            <Link to="/" className={`nav-link-premium ${isActive('/') ? 'active' : ''}`}>Home</Link>
+            <a href="/#skills" className={`nav-link-premium ${location.pathname === '/' ? '' : ''}`}>Skills</a>
             {!isProjectPage && (
               <Link to="/project" className="nav-link-premium nav-cta">
-                <i className="fas fa-folder-open me-1"></i>Lihat Project
+                <i className="fas fa-folder-open me-1"></i>View Project
               </Link>
             )}
           </div>
@@ -324,11 +324,11 @@ export default function Navbar() {
       </nav>
 
       <div className={`nav-mobile ${mobileOpen ? 'open' : ''}`} ref={mobileRef}>
-        <Link to="/" className={isActive('/') ? 'active' : ''} onClick={() => setMobileOpen(false)}>Beranda</Link>
-        <a href="/#skills" onClick={() => setMobileOpen(false)}>Skill</a>
+        <Link to="/" className={isActive('/') ? 'active' : ''} onClick={() => setMobileOpen(false)}>Home</Link>
+        <a href="/#skills" onClick={() => setMobileOpen(false)}>Skills</a>
         {!isProjectPage && (
           <Link to="/project" className="nav-cta-mobile" onClick={() => setMobileOpen(false)}>
-            <i className="fas fa-folder-open me-2"></i>Lihat Project
+            <i className="fas fa-folder-open me-2"></i>View Project
           </Link>
         )}
       </div>
