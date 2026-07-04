@@ -1,3 +1,4 @@
+// Navbar.js - Fix dengan font Playfair pada button
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 
@@ -17,7 +18,6 @@ export default function Navbar() {
   const isActive = (path) => location.pathname === path;
   const isProjectPage = location.pathname === '/project';
 
-  // Tutup menu saat klik di luar
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (
@@ -39,7 +39,6 @@ export default function Navbar() {
     };
   }, [mobileOpen]);
 
-  // Tutup menu saat scroll
   useEffect(() => {
     const handleScroll = () => {
       if (mobileOpen) setMobileOpen(false);
@@ -51,6 +50,8 @@ export default function Navbar() {
   return (
     <>
       <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+
         :root {
           --choco-900: #24140f;
           --choco-800: #321c14;
@@ -64,6 +65,7 @@ export default function Navbar() {
           --glass-shadow: 0 24px 80px rgba(36, 20, 15, 0.18), inset 0 1px 0 rgba(255, 248, 237, 0.12);
           --transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
           --radius-lg: 28px;
+          --font-display: 'Playfair Display', serif;
         }
 
         @keyframes gradientMove {
@@ -196,6 +198,7 @@ export default function Navbar() {
           animation: expandLine 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
         }
 
+        /* NAV CTA - Button Lihat Project dengan Playfair Display */
         .nav-cta {
           background: linear-gradient(135deg, #fff2d8, #c98545) !important;
           color: #24140f !important;
@@ -205,6 +208,7 @@ export default function Navbar() {
           font-weight: 700 !important;
           background-size: 200% 200%;
           animation: shimmer 3s ease-in-out infinite;
+          font-family: var(--font-display) !important; /* PLAYFAIR DISPLAY */
         }
 
         .nav-cta:hover {
@@ -266,6 +270,7 @@ export default function Navbar() {
           background: rgba(255, 248, 237, 0.10);
         }
 
+        /* NAV CTA MOBILE - dengan Playfair Display */
         .nav-mobile .nav-cta-mobile {
           background: linear-gradient(135deg, #fff2d8, #c98545);
           color: #24140f !important;
@@ -273,26 +278,7 @@ export default function Navbar() {
           margin-top: 0.5rem;
           border-radius: 12px;
           font-weight: 700;
-        }
-
-        /* ===== MOBILE CLOSE BUTTON ===== */
-        .nav-mobile .mobile-close {
-          position: absolute;
-          top: 12px;
-          right: 16px;
-          background: none;
-          border: none;
-          color: rgba(255, 248, 237, 0.6);
-          font-size: 1.4rem;
-          cursor: pointer;
-          transition: var(--transition);
-          padding: 0.3rem;
-          line-height: 1;
-        }
-
-        .nav-mobile .mobile-close:hover {
-          color: #fff2d8;
-          transform: rotate(90deg);
+          font-family: var(--font-display) !important; /* PLAYFAIR DISPLAY */
         }
 
         @media (max-width: 768px) {
@@ -318,13 +304,8 @@ export default function Navbar() {
           </Link>
 
           <div className="nav-links">
-            {/* Beranda - selalu tampil */}
             <Link to="/" className={`nav-link-premium ${isActive('/') ? 'active' : ''}`}>Beranda</Link>
-            
-            {/* Skill - selalu mengarah ke /#skills (Home) */}
             <a href="/#skills" className={`nav-link-premium ${location.pathname === '/' ? '' : ''}`}>Skill</a>
-            
-            {/* CTA Lihat Project - hanya tampil jika bukan di halaman Project */}
             {!isProjectPage && (
               <Link to="/project" className="nav-link-premium nav-cta">
                 <i className="fas fa-folder-open me-1"></i>Lihat Project
@@ -342,15 +323,9 @@ export default function Navbar() {
         </div>
       </nav>
 
-      {/* ===== MOBILE MENU ===== */}
       <div className={`nav-mobile ${mobileOpen ? 'open' : ''}`} ref={mobileRef}>
-        
-        
         <Link to="/" className={isActive('/') ? 'active' : ''} onClick={() => setMobileOpen(false)}>Beranda</Link>
-        
-        {/* Skill - selalu mengarah ke /#skills (Home) */}
         <a href="/#skills" onClick={() => setMobileOpen(false)}>Skill</a>
-        
         {!isProjectPage && (
           <Link to="/project" className="nav-cta-mobile" onClick={() => setMobileOpen(false)}>
             <i className="fas fa-folder-open me-2"></i>Lihat Project
@@ -358,7 +333,6 @@ export default function Navbar() {
         )}
       </div>
 
-      {/* ===== OVERLAY UNTUK TAP DI LUAR MENU ===== */}
       {mobileOpen && (
         <div 
           style={{

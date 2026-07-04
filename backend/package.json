@@ -1,7 +1,7 @@
 {
   "name": "portfolio-backend",
   "version": "1.0.0",
-  "description": "Backend Node.js untuk Portfolio",
+  "description": "Backend untuk portfolio",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",

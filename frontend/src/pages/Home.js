@@ -1,9 +1,7 @@
-// Home.js - Dengan efek tutul leopard
+// Home.js - Fix dengan background leopard statis + font button Playfair
 import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import Navbar from '../components/Navbar';
-
-const API = '';
 
 const nama = 'Hagia Sofiana';
 const tentang =
@@ -23,6 +21,7 @@ export default function Home() {
   const [totalProject, setTotalProject] = useState(0);
   const [isLoaded, setIsLoaded] = useState(false);
   const [roleIndex, setRoleIndex] = useState(0);
+  const [loading, setLoading] = useState(true);
   const cardRefs = useRef([]);
 
   useEffect(() => {
@@ -30,15 +29,29 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    fetch(`${API}/api/projects/recent`)
-      .then((r) => r.json())
-      .then(setRecentProjects)
-      .catch(console.error);
-
-    fetch(`${API}/api/projects/count`)
-      .then((r) => r.json())
-      .then((d) => setTotalProject(d.total))
-      .catch(console.error);
+    fetch('/data.json')
+      .then((r) => {
+        if (!r.ok) throw new Error(`HTTP error! status: ${r.status}`);
+        return r.json();
+      })
+      .then((data) => {
+        console.log('✅ Data dari JSON:', data);
+        if (data && data.projects) {
+          const recent = data.projects.slice(0, 3);
+          setRecentProjects(recent);
+          setTotalProject(data.projects.length);
+        } else {
+          setRecentProjects([]);
+          setTotalProject(0);
+        }
+        setLoading(false);
+      })
+      .catch((err) => {
+        console.error('❌ Gagal baca data.json:', err);
+        setRecentProjects([]);
+        setTotalProject(0);
+        setLoading(false);
+      });
   }, []);
 
   useEffect(() => {
@@ -56,7 +69,7 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    if (!isLoaded) return;
+    if (!isLoaded || loading) return;
 
     const observer = new IntersectionObserver(
       (entries) => {
@@ -81,7 +94,37 @@ export default function Home() {
       }
     });
     return () => observer.disconnect();
-  }, [isLoaded, recentProjects]);
+  }, [isLoaded, loading, recentProjects]);
+
+  if (loading) {
+    return (
+      <>
+        <Navbar />
+        <div style={{ 
+          display: 'flex', 
+          justifyContent: 'center', 
+          alignItems: 'center', 
+          minHeight: '100vh',
+          color: '#3d251a',
+          fontSize: '1.2rem'
+        }}>
+          <div style={{ textAlign: 'center' }}>
+            <div style={{ 
+              width: '40px', 
+              height: '40px', 
+              border: '4px solid #c98545',
+              borderTopColor: 'transparent',
+              borderRadius: '50%',
+              animation: 'spin 1s linear infinite',
+              margin: '0 auto 1rem'
+            }} />
+            <p>Loading data...</p>
+            <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+          </div>
+        </div>
+      </>
+    );
+  }
 
   return (
     <>
@@ -127,6 +170,7 @@ export default function Home() {
           overflow-x: hidden;
         }
 
+        /* ========== LEOPARD BACKGROUND PATTERN (STATIS) ========== */
         body::before {
           content: '';
           position: fixed;
@@ -134,11 +178,22 @@ export default function Home() {
           z-index: 0;
           pointer-events: none;
           background-image: 
-            radial-gradient(circle at 25% 20%, rgba(44, 26, 18, 0.04) 0px, transparent 60px),
-            radial-gradient(circle at 75% 40%, rgba(201, 133, 69, 0.04) 0px, transparent 50px),
-            radial-gradient(circle at 50% 80%, rgba(90, 56, 40, 0.03) 0px, transparent 70px);
-          background-size: 200px 200px, 180px 180px, 220px 220px;
+            radial-gradient(ellipse at 18% 18%, rgba(201, 133, 69, 0.25) 0 6px, rgba(201, 133, 69, 0.08) 7px 12px, transparent 13px),
+            radial-gradient(ellipse at 72% 28%, rgba(61, 37, 26, 0.20) 0 5px, rgba(201, 133, 69, 0.06) 6px 10px, transparent 11px),
+            radial-gradient(ellipse at 36% 74%, rgba(201, 133, 69, 0.20) 0 4px, rgba(61, 37, 26, 0.06) 5px 9px, transparent 10px),
+            radial-gradient(ellipse at 82% 72%, rgba(61, 37, 26, 0.18) 0 5px, rgba(201, 133, 69, 0.05) 6px 11px, transparent 12px),
+            radial-gradient(ellipse at 10% 50%, rgba(201, 133, 69, 0.15) 0 4px, rgba(61, 37, 26, 0.04) 5px 8px, transparent 9px),
+            radial-gradient(ellipse at 55% 90%, rgba(201, 133, 69, 0.22) 0 5px, rgba(61, 37, 26, 0.06) 6px 10px, transparent 11px),
+            radial-gradient(ellipse at 90% 55%, rgba(61, 37, 26, 0.18) 0 4px, rgba(201, 133, 69, 0.05) 5px 9px, transparent 10px),
+            radial-gradient(ellipse at 45% 10%, rgba(201, 133, 69, 0.20) 0 5px, rgba(61, 37, 26, 0.06) 6px 11px, transparent 12px);
+          background-size: 180px 160px, 200px 180px, 220px 200px, 190px 170px, 160px 140px, 210px 190px, 170px 150px, 230px 210px;
+          opacity: 0.6;
         }
+
+        .bg-orb{position:absolute;border-radius:50%;filter:blur(100px);animation:floatOrb 25s ease-in-out infinite;pointer-events:none}
+        .bg-orb:nth-child(1){width:500px;height:500px;background:#c98545;top:-200px;right:-120px;opacity:0.08}
+        .bg-orb:nth-child(2){width:400px;height:400px;background:#5a3828;bottom:-120px;left:-100px;animation-delay:-8s;opacity:0.10}
+        .bg-orb:nth-child(3){width:300px;height:300px;background:#2c1a12;top:50%;left:30%;animation-delay:-16s;opacity:0.06}
 
         @keyframes floatOrb {
           0%,100%{transform:translate(0,0)scale(1)}
@@ -211,80 +266,6 @@ export default function Home() {
           0% { left: -100%; }
           100% { left: 100%; }
         }
-
-        /* ================================================================ */
-        /* ========== LEOPARD SPOTS RAIN EFFECT =========================== */
-        /* ================================================================ */
-
-        @keyframes leopardFall {
-          0% {
-            transform: translateY(-100px) rotate(0deg) scale(0.6);
-            opacity: 0;
-          }
-          10% {
-            opacity: 1;
-          }
-          90% {
-            opacity: 0.6;
-          }
-          100% {
-            transform: translateY(calc(100vh + 100px)) rotate(720deg) scale(1.1);
-            opacity: 0;
-          }
-        }
-
-        .leopard-spots-container {
-          position: fixed;
-          inset: 0;
-          z-index: 0;
-          pointer-events: none;
-          overflow: hidden;
-        }
-
-        .leopard-spot {
-          position: absolute;
-          border-radius: 50%;
-          opacity: 0;
-          animation: leopardFall linear infinite;
-        }
-
-        .leopard-spot.gold {
-          background: radial-gradient(circle at 40% 30%, rgba(201, 133, 69, 0.5), rgba(90, 56, 40, 0.15));
-          border: 1px solid rgba(201, 133, 69, 0.12);
-          box-shadow: 
-            inset -2px -2px 6px rgba(0,0,0,0.08),
-            inset 2px 2px 6px rgba(255,215,180,0.05);
-        }
-
-        .leopard-spot.dark {
-          background: radial-gradient(circle at 45% 35%, rgba(61, 37, 26, 0.4), rgba(26, 15, 10, 0.1));
-          border: 1px solid rgba(61, 37, 26, 0.08);
-          box-shadow: 
-            inset -2px -2px 6px rgba(0,0,0,0.12),
-            inset 2px 2px 6px rgba(255,215,180,0.03);
-        }
-
-        .leopard-spot.light {
-          background: radial-gradient(circle at 50% 40%, rgba(232, 184, 122, 0.4), rgba(201, 133, 69, 0.08));
-          border: 1px solid rgba(232, 184, 122, 0.1);
-        }
-
-        .leopard-spot.irregular {
-          border-radius: 50% 40% 50% 60% / 40% 50% 60% 50%;
-        }
-
-        .leopard-spot.irregular-2 {
-          border-radius: 60% 40% 40% 50% / 50% 60% 40% 40%;
-        }
-
-        .leopard-spot.irregular-3 {
-          border-radius: 45% 55% 40% 60% / 55% 40% 60% 45%;
-        }
-
-        .bg-orb{position:absolute;border-radius:50%;filter:blur(100px);animation:floatOrb 25s ease-in-out infinite;pointer-events:none}
-        .bg-orb:nth-child(1){width:500px;height:500px;background:#c98545;top:-200px;right:-120px;opacity:0.10}
-        .bg-orb:nth-child(2){width:400px;height:400px;background:#5a3828;bottom:-120px;left:-100px;animation-delay:-8s;opacity:0.12}
-        .bg-orb:nth-child(3){width:300px;height:300px;background:#2c1a12;top:50%;left:30%;animation-delay:-16s;opacity:0.08}
 
         .main-content{position:relative;z-index:1;padding-top:100px}
 
@@ -506,7 +487,7 @@ export default function Home() {
         }
 
         /* ================================================================ */
-        /* ========== BUTTON STYLE FIXED ================================== */
+        /* ========== BUTTON STYLE - FONT PLAYFAIR ========================= */
         /* ================================================================ */
 
         .btn-primary-custom {
@@ -517,7 +498,7 @@ export default function Home() {
           padding: 0.85rem 2.6rem;
           border-radius: 50px;
           font-weight: 700;
-          font-size: 0.95rem;
+          font-size: 1rem;
           transition: var(--transition);
           box-shadow: 0 4px 20px rgba(201, 133, 69, 0.3);
           text-decoration: none;
@@ -529,7 +510,7 @@ export default function Home() {
           cursor: pointer;
           width: 100%;
           text-align: center;
-          font-family: var(--font-body);
+          font-family: var(--font-display); /* ← PLAYFAIR DISPLAY */
           position: relative;
           overflow: hidden;
         }
@@ -565,7 +546,7 @@ export default function Home() {
           padding: 0.85rem 2.6rem;
           border-radius: 50px;
           font-weight: 700;
-          font-size: 0.95rem;
+          font-size: 1rem;
           transition: var(--transition);
           box-shadow: 0 4px 20px rgba(26, 15, 10, 0.25);
           text-decoration: none;
@@ -576,7 +557,7 @@ export default function Home() {
           cursor: pointer;
           width: 100%;
           text-align: center;
-          font-family: var(--font-body);
+          font-family: var(--font-display); /* ← PLAYFAIR DISPLAY */
           position: relative;
           overflow: hidden;
         }
@@ -1066,32 +1047,7 @@ export default function Home() {
       <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" />
       <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" />
 
-      {/* ===== LEOPARD SPOTS RAIN EFFECT ===== */}
-      <div className="leopard-spots-container">
-        {[...Array(35)].map((_, i) => {
-          const size = 3 + Math.random() * 18;
-          const left = Math.random() * 100;
-          const delay = Math.random() * 25;
-          const duration = 12 + Math.random() * 25;
-          const types = ['gold', 'dark', 'light', 'irregular', 'irregular-2', 'irregular-3'];
-          const spotClass = 'leopard-spot ' + types[Math.floor(Math.random() * types.length)];
-          
-          return (
-            <div
-              key={i}
-              className={spotClass}
-              style={{
-                width: size + 'px',
-                height: size * (0.7 + Math.random() * 0.5) + 'px',
-                left: left + '%',
-                animationDuration: duration + 's',
-                animationDelay: delay + 's',
-                opacity: 0.15 + Math.random() * 0.35,
-              }}
-            />
-          );
-        })}
-      </div>
+      {/* HAPUS leopard-spots-container - diganti background pattern */}
 
       <div style={{ position: 'fixed', inset: 0, zIndex: 0, overflow: 'hidden', pointerEvents: 'none' }}>
         <div className="bg-orb"></div>
@@ -1215,7 +1171,10 @@ export default function Home() {
               <>
                 <div className="row g-4">
                   {recentProjects.map((project, i) => {
-                    const teknologiList = project.teknologi ? project.teknologi.split('|') : [];
+                    const teknologiList = Array.isArray(project.teknologi) 
+                      ? project.teknologi 
+                      : (project.teknologi ? project.teknologi.split('|') : []);
+                    
                     return (
                       <div className="col-md-4 col-sm-6 col-12" key={project.id}>
                         <div className="project-card h-100" ref={(el) => { cardRefs.current[i + 12] = el; }}>

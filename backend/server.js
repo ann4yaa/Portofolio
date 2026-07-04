@@ -8,17 +8,12 @@ const cors = require('cors');
 const app = express();
 const PORT = 5000;
 
-// ========================
 // Middleware
-// ========================
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// ========================
 // Koneksi Database
-// ========================
 const conn = mysql.createConnection({
   host: 'localhost',
   user: 'root',
@@ -36,11 +31,64 @@ conn.connect((err) => {
 });
 
 // ========================
-// Multer - Upload Gambar
+// FUNGSI GENERATE JSON
+// ========================
+const generateJSON = () => {
+  return new Promise((resolve, reject) => {
+    const query = `
+      SELECT p.*, k.kategori,
+             GROUP_CONCAT(DISTINCT t.nama_teknologi SEPARATOR '|') AS teknologi,
+             GROUP_CONCAT(DISTINCT t.id SEPARATOR '|') AS teknologi_id
+      FROM project p
+      LEFT JOIN kategori k ON p.kategori_id = k.id
+      LEFT JOIN project_teknologi pt ON p.id = pt.project_id
+      LEFT JOIN teknologi t ON pt.teknologi_id = t.id
+      GROUP BY p.id
+      ORDER BY p.created_at DESC
+    `;
+    
+    conn.query(query, (err, rows) => {
+      if (err) {
+        reject(err);
+        return;
+      }
+      
+      const data = {
+        projects: rows.map(row => ({
+          id: row.id,
+          nama_project: row.nama_project,
+          kategori_id: row.kategori_id,
+          kategori: row.kategori,
+          deskripsi: row.deskripsi,
+          gambar: row.gambar,
+          github: row.github,
+          demo: row.demo,
+          teknologi: row.teknologi ? row.teknologi.split('|') : [],
+          created_at: row.created_at
+        })),
+        last_updated: new Date().toISOString()
+      };
+      
+      // Tulis ke frontend/public
+      const jsonPath = path.join(__dirname, '../frontend/public/data.json');
+      const dir = path.dirname(jsonPath);
+      if (!fs.existsSync(dir)) {
+        fs.mkdirSync(dir, { recursive: true });
+      }
+      
+      fs.writeFileSync(jsonPath, JSON.stringify(data, null, 2));
+      console.log('✅ data.json berhasil di-generate!');
+      resolve(data);
+    });
+  });
+};
+
+// ========================
+// MULTER - UPLOAD GAMBAR
 // ========================
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    const dir = path.join(__dirname, 'uploads');
+    const dir = path.join(__dirname, '../frontend/public/uploads');
     if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
     cb(null, dir);
   },
@@ -50,23 +98,22 @@ const storage = multer.diskStorage({
   },
 });
 
-const fileFilter = (req, file, cb) => {
-  const allowed = ['.jpg', '.jpeg', '.png', '.gif'];
-  const ext = path.extname(file.originalname).toLowerCase();
-  if (allowed.includes(ext)) cb(null, true);
-  else cb(new Error('Format file tidak didukung'), false);
-};
-
 const upload = multer({
   storage,
-  fileFilter,
-  limits: { fileSize: 2 * 1024 * 1024 }, // 2MB
+  fileFilter: (req, file, cb) => {
+    const allowed = ['.jpg', '.jpeg', '.png', '.gif'];
+    const ext = path.extname(file.originalname).toLowerCase();
+    if (allowed.includes(ext)) cb(null, true);
+    else cb(new Error('Format file tidak didukung'), false);
+  },
+  limits: { fileSize: 2 * 1024 * 1024 },
 });
 
 // ========================
-// ROUTES - Kategori
+// ROUTES - UNTUK ADMIN (local)
 // ========================
-// GET semua kategori
+
+// GET kategori
 app.get('/api/kategori', (req, res) => {
   conn.query('SELECT * FROM kategori ORDER BY kategori', (err, rows) => {
     if (err) return res.status(500).json({ error: err.message });
@@ -74,10 +121,7 @@ app.get('/api/kategori', (req, res) => {
   });
 });
 
-// ========================
-// ROUTES - Teknologi
-// ========================
-// GET semua teknologi
+// GET teknologi
 app.get('/api/teknologi', (req, res) => {
   conn.query('SELECT * FROM teknologi ORDER BY nama_teknologi', (err, rows) => {
     if (err) return res.status(500).json({ error: err.message });
@@ -85,11 +129,7 @@ app.get('/api/teknologi', (req, res) => {
   });
 });
 
-// ========================
-// ROUTES - Project
-// ========================
-
-// GET semua project (admin - dengan teknologi)
+// GET semua project (admin)
 app.get('/api/projects', (req, res) => {
   const query = `
     SELECT p.*,
@@ -106,59 +146,7 @@ app.get('/api/projects', (req, res) => {
   });
 });
 
-// GET project dengan filter kategori (halaman project publik)
-app.get('/api/projects/public', (req, res) => {
-  const kategoriId = parseInt(req.query.kategori) || 0;
-
-  let query = `
-    SELECT p.*, k.kategori,
-           GROUP_CONCAT(DISTINCT t.nama_teknologi SEPARATOR '|') AS teknologi,
-           GROUP_CONCAT(DISTINCT t.id SEPARATOR '|') AS teknologi_id
-    FROM project p
-    LEFT JOIN kategori k ON p.kategori_id = k.id
-    LEFT JOIN project_teknologi pt ON p.id = pt.project_id
-    LEFT JOIN teknologi t ON pt.teknologi_id = t.id
-  `;
-  const params = [];
-  if (kategoriId > 0) {
-    query += ' WHERE p.kategori_id = ?';
-    params.push(kategoriId);
-  }
-  query += ' GROUP BY p.id ORDER BY p.created_at DESC';
-
-  conn.query(query, params, (err, rows) => {
-    if (err) return res.status(500).json({ error: err.message });
-    res.json(rows);
-  });
-});
-
-// GET 3 project terbaru (homepage)
-app.get('/api/projects/recent', (req, res) => {
-  const query = `
-    SELECT p.*,
-           GROUP_CONCAT(t.nama_teknologi SEPARATOR '|') AS teknologi
-    FROM project p
-    LEFT JOIN project_teknologi pt ON p.id = pt.project_id
-    LEFT JOIN teknologi t ON pt.teknologi_id = t.id
-    GROUP BY p.id
-    ORDER BY p.created_at DESC
-    LIMIT 3
-  `;
-  conn.query(query, (err, rows) => {
-    if (err) return res.status(500).json({ error: err.message });
-    res.json(rows);
-  });
-});
-
-// GET total project
-app.get('/api/projects/count', (req, res) => {
-  conn.query('SELECT COUNT(*) AS total FROM project', (err, rows) => {
-    if (err) return res.status(500).json({ error: err.message });
-    res.json({ total: rows[0].total });
-  });
-});
-
-// GET satu project (untuk edit)
+// GET satu project
 app.get('/api/projects/:id', (req, res) => {
   const id = parseInt(req.params.id);
   conn.query('SELECT * FROM project WHERE id = ?', [id], (err, rows) => {
@@ -166,7 +154,6 @@ app.get('/api/projects/:id', (req, res) => {
     if (rows.length === 0) return res.status(404).json({ error: 'Project tidak ditemukan' });
 
     const project = rows[0];
-    // Ambil teknologi yang dipilih
     conn.query(
       'SELECT teknologi_id FROM project_teknologi WHERE project_id = ?',
       [id],
@@ -202,11 +189,19 @@ app.post('/api/projects', upload.single('gambar'), (req, res) => {
         [techValues],
         (err2) => {
           if (err2) return res.status(500).json({ error: err2.message });
-          res.json({ success: true, id: projectId, status: 'tambah' });
+          generateJSON().then(() => {
+            res.json({ success: true, id: projectId, status: 'tambah' });
+          }).catch(err3 => {
+            res.status(500).json({ error: err3.message });
+          });
         }
       );
     } else {
-      res.json({ success: true, id: projectId, status: 'tambah' });
+      generateJSON().then(() => {
+        res.json({ success: true, id: projectId, status: 'tambah' });
+      }).catch(err3 => {
+        res.status(500).json({ error: err3.message });
+      });
     }
   });
 });
@@ -218,7 +213,6 @@ app.put('/api/projects/:id', upload.single('gambar'), (req, res) => {
   let teknologi = req.body['teknologi[]'] || req.body.teknologi || [];
   if (!Array.isArray(teknologi)) teknologi = teknologi ? [teknologi] : [];
 
-  // Ambil gambar lama jika tidak ada upload baru
   conn.query('SELECT gambar FROM project WHERE id = ?', [id], (err, rows) => {
     if (err) return res.status(500).json({ error: err.message });
     if (rows.length === 0) return res.status(404).json({ error: 'Project tidak ditemukan' });
@@ -228,9 +222,8 @@ app.put('/api/projects/:id', upload.single('gambar'), (req, res) => {
 
     if (req.file) {
       newGambar = req.file.filename;
-      // Hapus gambar lama
       if (oldGambar) {
-        const oldPath = path.join(__dirname, 'uploads', oldGambar);
+        const oldPath = path.join(__dirname, '../frontend/public/uploads', oldGambar);
         if (fs.existsSync(oldPath)) fs.unlinkSync(oldPath);
       }
     }
@@ -251,7 +244,6 @@ app.put('/api/projects/:id', upload.single('gambar'), (req, res) => {
       (err2) => {
         if (err2) return res.status(500).json({ error: err2.message });
 
-        // Hapus teknologi lama lalu insert baru
         conn.query('DELETE FROM project_teknologi WHERE project_id = ?', [id], (err3) => {
           if (err3) return res.status(500).json({ error: err3.message });
 
@@ -262,11 +254,19 @@ app.put('/api/projects/:id', upload.single('gambar'), (req, res) => {
               [techValues],
               (err4) => {
                 if (err4) return res.status(500).json({ error: err4.message });
-                res.json({ success: true, status: 'edit' });
+                generateJSON().then(() => {
+                  res.json({ success: true, status: 'edit' });
+                }).catch(err5 => {
+                  res.status(500).json({ error: err5.message });
+                });
               }
             );
           } else {
-            res.json({ success: true, status: 'edit' });
+            generateJSON().then(() => {
+              res.json({ success: true, status: 'edit' });
+            }).catch(err5 => {
+              res.status(500).json({ error: err5.message });
+            });
           }
         });
       }
@@ -284,23 +284,104 @@ app.delete('/api/projects/:id', (req, res) => {
 
     const gambar = rows[0].gambar;
 
-    // Hapus file gambar
     if (gambar) {
-      const filePath = path.join(__dirname, 'uploads', gambar);
+      const filePath = path.join(__dirname, '../frontend/public/uploads', gambar);
       if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
     }
 
-    // Hapus project (ON DELETE CASCADE akan hapus project_teknologi)
     conn.query('DELETE FROM project WHERE id = ?', [id], (err2) => {
       if (err2) return res.status(500).json({ error: err2.message });
-      res.json({ success: true, status: 'hapus' });
+      generateJSON().then(() => {
+        res.json({ success: true, status: 'hapus' });
+      }).catch(err3 => {
+        res.status(500).json({ error: err3.message });
+      });
     });
   });
 });
 
 // ========================
-// Start Server
+// ROUTES - UNTUK FRONTEND PUBLIC (baca dari JSON)
 // ========================
+
+app.get('/api/projects/public', (req, res) => {
+  try {
+    const jsonPath = path.join(__dirname, '../frontend/public/data.json');
+    if (fs.existsSync(jsonPath)) {
+      const data = JSON.parse(fs.readFileSync(jsonPath, 'utf8'));
+      const kategoriId = parseInt(req.query.kategori) || 0;
+      let projects = data.projects;
+      if (kategoriId > 0) {
+        projects = projects.filter(p => p.kategori_id === kategoriId);
+      }
+      res.json(projects);
+    } else {
+      generateJSON().then(() => {
+        const data = JSON.parse(fs.readFileSync(jsonPath, 'utf8'));
+        const kategoriId = parseInt(req.query.kategori) || 0;
+        let projects = data.projects;
+        if (kategoriId > 0) {
+          projects = projects.filter(p => p.kategori_id === kategoriId);
+        }
+        res.json(projects);
+      }).catch(err => {
+        res.status(500).json({ error: err.message });
+      });
+    }
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/projects/recent', (req, res) => {
+  try {
+    const jsonPath = path.join(__dirname, '../frontend/public/data.json');
+    if (fs.existsSync(jsonPath)) {
+      const data = JSON.parse(fs.readFileSync(jsonPath, 'utf8'));
+      res.json(data.projects.slice(0, 3));
+    } else {
+      generateJSON().then(() => {
+        const data = JSON.parse(fs.readFileSync(jsonPath, 'utf8'));
+        res.json(data.projects.slice(0, 3));
+      }).catch(err => {
+        res.status(500).json({ error: err.message });
+      });
+    }
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/projects/count', (req, res) => {
+  try {
+    const jsonPath = path.join(__dirname, '../frontend/public/data.json');
+    if (fs.existsSync(jsonPath)) {
+      const data = JSON.parse(fs.readFileSync(jsonPath, 'utf8'));
+      res.json({ total: data.projects.length });
+    } else {
+      generateJSON().then(() => {
+        const data = JSON.parse(fs.readFileSync(jsonPath, 'utf8'));
+        res.json({ total: data.projects.length });
+      }).catch(err => {
+        res.status(500).json({ error: err.message });
+      });
+    }
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ========================
+// START SERVER
+// ========================
+generateJSON().then(() => {
+  console.log('✅ data.json siap digunakan!');
+}).catch(err => {
+  console.error('❌ Gagal generate data.json:', err);
+});
+
 app.listen(PORT, () => {
   console.log(`Server berjalan di http://localhost:${PORT}`);
+  console.log(`📁 Upload gambar ke: frontend/public/uploads/`);
+  console.log(`📄 Data JSON di: frontend/public/data.json`);
 });
