@@ -23,7 +23,7 @@ Instead of serving portfolio data directly from the database, the backend genera
 preview.png
 ```
 
-```markdown
+
 <h1 align="center">Hagia Sofiana Portfolio</h1>
 
 <p align="center">
@@ -31,9 +31,9 @@ preview.png
 </p>
 
 <p align="center">
-  <img src="./preview.png" alt="Preview">
+  <img src="preview.png" alt="Preview">
 </p>
-```
+
 
 ---
 
