@@ -24,7 +24,15 @@ preview.png
 ```
 
 ```markdown
-![Portfolio Preview](./preview.png)
+<h1 align="center">Hagia Sofiana Portfolio</h1>
+
+<p align="center">
+  A Full Stack Portfolio Management System
+</p>
+
+<p align="center">
+  <img src="./preview.png" alt="Preview">
+</p>
 ```
 
 ---
