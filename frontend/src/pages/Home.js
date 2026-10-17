@@ -3,6 +3,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import DOMPurify from 'dompurify'; // 🔒 TAMBAHKAN INI
+import { fetchPublicProjects } from '../utils/projectData';
 
 const nama = 'Hagia Sofiana';
 const tentang =
@@ -31,25 +32,12 @@ export default function Home() {
 
   // 🔒 FETCH DENGAN VALIDASI DATA
   useEffect(() => {
-    fetch('/assets/data.json')
-      .then((r) => {
-        if (!r.ok) throw new Error(`HTTP error! status: ${r.status}`);
-        return r.json();
-      })
-      .then((data) => {
-        console.log('✅ Data dari JSON:', data);
-        
-        // ===== VALIDASI DATA =====
-        if (!data || typeof data !== 'object') {
-          throw new Error('Data tidak valid');
-        }
-        
-        if (!Array.isArray(data.projects)) {
-          data.projects = [];
-        }
-        
+    fetchPublicProjects()
+      .then((projects) => {
+        console.log('✅ Data dari API:', projects);
+
         // Validasi setiap project
-        const validProjects = data.projects.filter(p => {
+        const validProjects = projects.filter(p => {
           return (
             typeof p === 'object' &&
             p !== null &&
@@ -74,7 +62,7 @@ export default function Home() {
         setLoading(false);
       })
       .catch((err) => {
-        console.error('❌ Gagal baca data.json:', err);
+        console.error('❌ Gagal membaca project:', err);
         setRecentProjects([]);
         setTotalProject(0);
         setLoading(false);

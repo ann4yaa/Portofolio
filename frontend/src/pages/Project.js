@@ -3,6 +3,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import DOMPurify from 'dompurify'; // 🔒 TAMBAHKAN INI
+import { fetchPublicProjects } from '../utils/projectData';
 
 export default function Project() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -19,25 +20,10 @@ export default function Project() {
 
   // 🔒 FETCH DENGAN VALIDASI DATA
   useEffect(() => {
-    fetch('/assets/data.json')
-      .then((r) => {
-        if (!r.ok) throw new Error(`HTTP error! status: ${r.status}`);
-        return r.json();
-      })
-      .then((data) => {
-        console.log('✅ Data dari JSON:', data);
-        
-        // ===== VALIDASI DATA =====
-        if (!data || typeof data !== 'object') {
-          throw new Error('Data tidak valid');
-        }
-        
-        if (!Array.isArray(data.projects)) {
-          data.projects = [];
-        }
-        
+    fetchPublicProjects()
+      .then((projectsData) => {
         // Validasi setiap project
-        const validProjects = data.projects.filter(p => {
+        const validProjects = projectsData.filter(p => {
           return (
             typeof p === 'object' &&
             p !== null &&
@@ -81,7 +67,7 @@ export default function Project() {
         setLoading(false);
       })
       .catch((err) => {
-        console.error('❌ Gagal baca data.json:', err);
+        console.error('❌ Gagal membaca project:', err);
         setProjects([]);
         setKategoriList([]);
         setLoading(false);
