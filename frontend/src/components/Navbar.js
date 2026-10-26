@@ -1,4 +1,4 @@
-// Navbar.js - Fix dengan font Playfair pada button
+// Navbar.js - Desain seperti screenshot (isi tetap Home, Skills, View Project)
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 
@@ -50,7 +50,7 @@ export default function Navbar() {
   return (
     <>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
 
         :root {
           --choco-900: #24140f;
@@ -59,23 +59,13 @@ export default function Navbar() {
           --cream-50: #fff8ed;
           --cream-100: #f6ead7;
           --caramel: #c98545;
-          --gradient-main: linear-gradient(135deg, #4a2a1d 0%, #8a4b2a 54%, #c98545 100%);
           --gradient-glass: linear-gradient(145deg, rgba(50, 28, 20, 0.94), rgba(36, 20, 15, 0.88));
           --glass-border: rgba(255, 248, 237, 0.16);
           --glass-shadow: 0 24px 80px rgba(36, 20, 15, 0.18), inset 0 1px 0 rgba(255, 248, 237, 0.12);
           --transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
           --radius-lg: 28px;
-          --font-display: 'Playfair Display', serif;
         }
 
-        @keyframes gradientMove {
-          0%,100%{background-position:0% 50%}
-          50%{background-position:100% 50%}
-        }
-        @keyframes pulseGlow {
-          0%,100%{box-shadow:0 4px 12px rgba(36,20,15,0.22)}
-          50%{box-shadow:0 4px 24px rgba(201,133,69,0.35);transform:scale(1.05)}
-        }
         @keyframes slideDown {
           from {
             transform: translateX(-50%) translateY(-120px);
@@ -86,15 +76,13 @@ export default function Navbar() {
             opacity: 1;
           }
         }
+
         @keyframes expandLine {
           from { width: 0; opacity: 0; }
           to { width: 20px; opacity: 1; }
         }
-        @keyframes shimmer {
-          0%,100%{background-position:0% 50%}
-          50%{background-position:100% 50%}
-        }
 
+        /* NAVBAR UTAMA - Desain seperti screenshot */
         .navbar-premium {
           position: fixed;
           top: 20px;
@@ -122,50 +110,35 @@ export default function Navbar() {
           padding: 0.4rem 1.5rem;
         }
 
+        /* BRAND - Font bold seperti easylog */
         .navbar-brand {
-          font-weight: 900;
-          font-size: 1.35rem;
+          font-weight: 800;
+          font-size: 1.6rem;
           color: #fff8ed;
           letter-spacing: -0.5px;
           text-decoration: none;
           display: flex;
           align-items: center;
           gap: 0.6rem;
-        }
-
-        .navbar-brand .brand-icon {
-          background: linear-gradient(135deg, #fff2d8, #c98545);
-          width: 36px;
-          height: 36px;
-          border-radius: 10px;
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          color: #24140f;
-          font-size: 1rem;
-          animation: pulseGlow 3s ease-in-out infinite;
-          background-size: 200% 200%;
-          box-shadow: 0 4px 12px rgba(36, 20, 15, 0.22);
-          flex-shrink: 0;
+          font-family: 'Inter', sans-serif;
         }
 
         .navbar-brand .brand-text {
-          background: linear-gradient(135deg, #fff2d8, #d79a58, #8a4b2a);
+          background: linear-gradient(135deg, #fff2d8, #d79a58);
           -webkit-background-clip: text;
           -webkit-text-fill-color: transparent;
           background-clip: text;
-          background-size: 200% 200%;
-          animation: gradientMove 4s ease-in-out infinite;
         }
 
+        /* NAV LINKS - Style minimalis seperti screenshot */
         .nav-links {
           display: flex;
           align-items: center;
-          gap: 0.2rem;
+          gap: 0.3rem;
         }
 
         .nav-link-premium {
-          color: rgba(255, 248, 237, 0.74);
+          color: rgba(255, 248, 237, 0.7);
           font-weight: 500;
           padding: 0.5rem 1rem;
           border-radius: 12px;
@@ -173,16 +146,18 @@ export default function Navbar() {
           text-decoration: none;
           font-size: 0.9rem;
           position: relative;
+          font-family: 'Inter', sans-serif;
+          letter-spacing: 0.3px;
         }
 
         .nav-link-premium:hover {
           color: #fff2d8;
-          background: rgba(255, 248, 237, 0.08);
+          background: rgba(255, 248, 237, 0.06);
         }
 
         .nav-link-premium.active {
           color: #fff2d8;
-          background: rgba(255, 248, 237, 0.08);
+          background: rgba(255, 248, 237, 0.06);
         }
 
         .nav-link-premium.active::after {
@@ -192,13 +167,13 @@ export default function Navbar() {
           left: 50%;
           transform: translateX(-50%);
           width: 20px;
-          height: 3px;
+          height: 2.5px;
           background: linear-gradient(135deg, #fff2d8, #c98545);
           border-radius: 4px;
           animation: expandLine 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
         }
 
-        /* NAV CTA - Button Lihat Project dengan Playfair Display */
+        /* BUTTON SAVE - Style seperti di screenshot */
         .nav-cta {
           background: linear-gradient(135deg, #fff2d8, #c98545) !important;
           color: #24140f !important;
@@ -206,17 +181,18 @@ export default function Navbar() {
           border-radius: 50px !important;
           box-shadow: 0 4px 16px rgba(36, 20, 15, 0.22);
           font-weight: 700 !important;
-          background-size: 200% 200%;
-          animation: shimmer 3s ease-in-out infinite;
-          font-family: var(--font-display) !important; /* PLAYFAIR DISPLAY */
+          font-family: 'Inter', sans-serif !important;
+          font-size: 0.85rem !important;
+          letter-spacing: 0.3px;
         }
 
         .nav-cta:hover {
-          transform: translateY(-3px) scale(1.03);
+          transform: translateY(-2px) scale(1.02);
           box-shadow: 0 6px 28px rgba(201, 133, 69, 0.35);
           color: #24140f !important;
         }
 
+        /* MOBILE TOGGLE */
         .nav-toggle {
           display: none;
           background: none;
@@ -233,6 +209,7 @@ export default function Navbar() {
           background: rgba(255, 248, 237, 0.06);
         }
 
+        /* MOBILE MENU */
         .nav-mobile {
           display: none;
           position: fixed;
@@ -262,6 +239,8 @@ export default function Navbar() {
           color: rgba(255, 248, 237, 0.76);
           font-weight: 500;
           transition: var(--transition);
+          font-family: 'Inter', sans-serif;
+          letter-spacing: 0.3px;
         }
 
         .nav-mobile a:hover,
@@ -270,7 +249,6 @@ export default function Navbar() {
           background: rgba(255, 248, 237, 0.10);
         }
 
-        /* NAV CTA MOBILE - dengan Playfair Display */
         .nav-mobile .nav-cta-mobile {
           background: linear-gradient(135deg, #fff2d8, #c98545);
           color: #24140f !important;
@@ -278,7 +256,7 @@ export default function Navbar() {
           margin-top: 0.5rem;
           border-radius: 12px;
           font-weight: 700;
-          font-family: var(--font-display) !important; /* PLAYFAIR DISPLAY */
+          font-family: 'Inter', sans-serif !important;
         }
 
         @media (max-width: 768px) {
@@ -293,16 +271,20 @@ export default function Navbar() {
             top: 10px;
             border-radius: 18px;
           }
+          .navbar-brand {
+            font-size: 1.3rem;
+          }
         }
       `}</style>
 
       <nav className={`navbar-premium ${scrolled ? 'scrolled' : ''}`}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          {/* Brand - 4naa dengan style bold seperti easylog */}
           <Link to="/" className="navbar-brand">
-            <span className="brand-icon"><i className="fas fa-code"></i></span>
             <span className="brand-text">4naa</span>
           </Link>
 
+          {/* Desktop Navigation - ISI TETAP SAMA */}
           <div className="nav-links">
             <Link to="/" className={`nav-link-premium ${isActive('/') ? 'active' : ''}`}>Home</Link>
             <a href="/#skills" className={`nav-link-premium ${location.pathname === '/' ? '' : ''}`}>Skills</a>
@@ -313,6 +295,7 @@ export default function Navbar() {
             )}
           </div>
 
+          {/* Mobile Toggle */}
           <button 
             className="nav-toggle" 
             ref={toggleRef}
@@ -323,6 +306,7 @@ export default function Navbar() {
         </div>
       </nav>
 
+      {/* Mobile Menu - ISI TETAP SAMA */}
       <div className={`nav-mobile ${mobileOpen ? 'open' : ''}`} ref={mobileRef}>
         <Link to="/" className={isActive('/') ? 'active' : ''} onClick={() => setMobileOpen(false)}>Home</Link>
         <a href="/#skills" onClick={() => setMobileOpen(false)}>Skills</a>
@@ -333,6 +317,7 @@ export default function Navbar() {
         )}
       </div>
 
+      {/* Backdrop */}
       {mobileOpen && (
         <div 
           style={{
