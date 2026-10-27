@@ -1,7 +1,8 @@
-// Tambah.js
+// Tambah.js - tambah project baru.
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import ProjectForm from './components/ProjectForm'; // ← PERBAIKI PATH
+import AdminLayout from './components/AdminLayout';
+import ProjectFields from './components/ProjectFields';
 
 const API = '';
 
@@ -10,116 +11,77 @@ export default function Tambah() {
   const [kategoriList, setKategoriList] = useState([]);
   const [teknologiList, setTeknologiList] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
-  const [form, setForm] = useState({
-    nama_project: '',
-    kategori_id: '',
-    deskripsi: '',
-    github: '',
-    demo: '',
-  });
+  const [form, setForm] = useState({ nama_project: '', kategori_id: '', deskripsi: '', github: '', demo: '' });
   const [gambarFile, setGambarFile] = useState(null);
-  const [selectedTech, setSelectedTech] = useState([]);
+  const [selectedTech, setSelectedTech] = useState([]); // id sebagai string
 
   useEffect(() => {
-    fetch(`${API}/api/kategori`).then(r => r.json()).then(setKategoriList).catch(console.error);
-    fetch(`${API}/api/teknologi`).then(r => r.json()).then(setTeknologiList).catch(console.error);
+    fetch(`${API}/api/kategori`)
+      .then((r) => (r.ok ? r.json() : []))
+      .then((data) => setKategoriList(Array.isArray(data) ? data : []))
+      .catch(console.error);
+    fetch(`${API}/api/teknologi`)
+      .then((r) => (r.ok ? r.json() : []))
+      .then((data) => setTeknologiList(Array.isArray(data) ? data : []))
+      .catch(console.error);
   }, []);
 
-  const handleChange = (e) => {
-    setForm(prev => ({ ...prev, [e.target.name]: e.target.value }));
-  };
+  const handleChange = (e) => setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
 
-  const handleTechChange = (id) => {
-    setSelectedTech(prev =>
-      prev.includes(id) ? prev.filter(t => t !== id) : [...prev, id]
-    );
-  };
+  const toggleTech = (id) =>
+    setSelectedTech((prev) => (prev.includes(id) ? prev.filter((t) => t !== id) : [...prev, id]));
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
+    setError('');
 
     const data = new FormData();
-    data.append('nama_project', form.nama_project);
-    data.append('kategori_id', form.kategori_id);
-    data.append('deskripsi', form.deskripsi);
-    data.append('github', form.github);
-    data.append('demo', form.demo);
+    Object.entries(form).forEach(([k, v]) => data.append(k, v));
     if (gambarFile) data.append('gambar', gambarFile);
-    selectedTech.forEach(tid => data.append('teknologi[]', tid));
+    selectedTech.forEach((tid) => data.append('teknologi[]', tid));
 
     try {
       const res = await fetch(`${API}/api/projects`, { method: 'POST', body: data });
-      const result = await res.json();
-      if (result.success) navigate('/?status=tambah');
-      else alert('Gagal menyimpan project');
+      const result = await res.json().catch(() => ({}));
+      if (res.ok && result.success) {
+        navigate('/?status=tambah');
+      } else {
+        setError(result.message || result.error || `Gagal menyimpan project (server returned ${res.status}).`);
+      }
     } catch (err) {
-      alert('Error: ' + err.message);
+      setError(`Gagal menyimpan project: ${err.message}`);
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <ProjectForm title="Tambah Project Baru" icon="fa-plus-circle" onSubmit={handleSubmit} loading={loading}>
-      <div className="mb-3">
-        <label className="form-label">Nama Project</label>
-        <input type="text" className="form-control" name="nama_project" value={form.nama_project} onChange={handleChange} required />
-      </div>
-
-      <div className="mb-3">
-        <label className="form-label">Kategori</label>
-        <select name="kategori_id" className="form-control" value={form.kategori_id} onChange={handleChange} required>
-          <option value="">-- Pilih Kategori --</option>
-          {kategoriList.map(k => (
-            <option key={k.id} value={k.id}>{k.kategori}</option>
-          ))}
-        </select>
-      </div>
-
-      <div className="mb-3">
-        <label className="form-label">Deskripsi</label>
-        <textarea className="form-control" name="deskripsi" rows="4" value={form.deskripsi} onChange={handleChange} required></textarea>
-      </div>
-
-      <div className="mb-3">
-        <label className="form-label">Screenshot Project</label>
-        <input type="file" className="form-control" accept="image/*" onChange={e => setGambarFile(e.target.files[0])} />
-        <small className="text-light opacity-50">Format: JPG, PNG, GIF (Max 2MB)</small>
-      </div>
-
-      <div className="mb-3">
-        <label className="form-label">Link GitHub</label>
-        <input type="url" className="form-control" name="github" value={form.github} onChange={handleChange} placeholder="https://github.com/..." />
-      </div>
-
-      <div className="mb-3">
-        <label className="form-label">Link Demo</label>
-        <input type="url" className="form-control" name="demo" value={form.demo} onChange={handleChange} placeholder="https://..." />
-      </div>
-
-      <div className="mb-4">
-        <label className="form-label d-block">Teknologi yang Digunakan</label>
-        <div className="row g-2">
-          {teknologiList.map(tech => (
-            <div className="col-md-3" key={tech.id}>
-              <div className="form-check">
-                <input
-                  className="form-check-input"
-                  type="checkbox"
-                  id={`tech_${tech.id}`}
-                  checked={selectedTech.includes(tech.id)}
-                  onChange={() => handleTechChange(tech.id)}
-                />
-                <label className="form-check-label" htmlFor={`tech_${tech.id}`}>
-                  {tech.nama_teknologi}
-                </label>
-              </div>
-            </div>
-          ))}
+    <AdminLayout title="Tambah project" subtitle="Isi detail project yang akan tampil di portofolio.">
+      {error && (
+        <div className="adm-notice adm-notice--error" role="alert">
+          <span>{error}</span>
+          <button type="button" onClick={() => setError('')} aria-label="Tutup">
+            &times;
+          </button>
         </div>
-      </div>
-    </ProjectForm>
+      )}
+      <ProjectFields
+        form={form}
+        onChange={handleChange}
+        kategoriList={kategoriList}
+        teknologiList={teknologiList}
+        selectedTech={selectedTech}
+        onToggleTech={toggleTech}
+        onClearTech={() => setSelectedTech([])}
+        gambarFile={gambarFile}
+        onFile={setGambarFile}
+        loading={loading}
+        submitLabel="Simpan project"
+        onSubmit={handleSubmit}
+      />
+    </AdminLayout>
   );
 }

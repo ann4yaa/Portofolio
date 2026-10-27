@@ -1,334 +1,166 @@
-// Navbar.js - Desain seperti screenshot (isi tetap Home, Skills, View Project)
-import React, { useState, useEffect, useRef } from 'react';
+// Navbar.js - light glass, navigasi section + sosmed
+import React, { useEffect, useRef, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import { PROFILE, NAV_ITEMS, SOCIALS } from '../data/siteData';
+import '../styles/portfolio.css';
 
 export default function Navbar() {
+  const { pathname, hash } = useLocation();
+  const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  const [mobileOpen, setMobileOpen] = useState(false);
-  const location = useLocation();
-  const mobileRef = useRef(null);
-  const toggleRef = useRef(null);
+  const [active, setActive] = useState('home');
+  const onProjectPage = pathname === '/project';
+  const scrolledRef = useRef(false);
+  const activeRef = useRef('home');
+
+  // [PERUBAHAN 4a: FIX BUG ACTIVE NAVBAR] ref untuk "mengunci" menu aktif sesaat setelah diklik
+  const lockRef = useRef(false);
+  const lockTimer = useRef(null);
+
+  // [PERUBAHAN 4b] kunci menu aktif selama halaman masih scroll otomatis akibat klik menu
+  const lockActive = (id) => {
+    if (activeRef.current !== id) {
+      activeRef.current = id;
+      setActive(id);
+    }
+    lockRef.current = true;
+    clearTimeout(lockTimer.current);
+    lockTimer.current = setTimeout(() => {
+      lockRef.current = false;
+    }, 250);
+  };
+
+  useEffect(() => () => clearTimeout(lockTimer.current), []);
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 50);
-    window.addEventListener('scroll', onScroll);
-    return () => window.removeEventListener('scroll', onScroll);
-  }, []);
-
-  const isActive = (path) => location.pathname === path;
-  const isProjectPage = location.pathname === '/project';
+    const section = hash.slice(1);
+    const next = NAV_ITEMS.some((item) => item.hash === section) ? section : 'home';
+    if (activeRef.current !== next) {
+      activeRef.current = next;
+      setActive(next);
+    }
+  }, [pathname, hash]);
 
   useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (
-        mobileOpen &&
-        mobileRef.current &&
-        !mobileRef.current.contains(event.target) &&
-        toggleRef.current &&
-        !toggleRef.current.contains(event.target)
-      ) {
-        setMobileOpen(false);
+    let frame = 0;
+    const update = () => {
+      frame = 0;
+      const next = scrolledRef.current ? window.scrollY > 24 : window.scrollY > 56;
+      if (next !== scrolledRef.current) {
+        scrolledRef.current = next;
+        setScrolled(next);
+      }
+
+      if (pathname !== '/') return;
+      if (lockRef.current) {
+        clearTimeout(lockTimer.current);
+        lockTimer.current = setTimeout(() => {
+          lockRef.current = false;
+        }, 150);
+        return;
+      }
+
+      const atBottom =
+        window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 4;
+      if (atBottom) {
+        const last = NAV_ITEMS[NAV_ITEMS.length - 1].hash;
+        if (activeRef.current !== last) {
+          activeRef.current = last;
+          setActive(last);
+        }
+        return;
+      }
+
+      let current = NAV_ITEMS[0].hash;
+      NAV_ITEMS.forEach((item) => {
+        const el = document.getElementById(item.hash);
+        if (el && el.getBoundingClientRect().top <= 90) current = item.hash;
+      });
+      if (activeRef.current !== current) {
+        activeRef.current = current;
+        setActive(current);
       }
     };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    document.addEventListener('touchstart', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-      document.removeEventListener('touchstart', handleClickOutside);
+    const onScroll = () => {
+      if (!frame) frame = window.requestAnimationFrame(update);
     };
-  }, [mobileOpen]);
+
+    update();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => {
+      window.removeEventListener('scroll', onScroll);
+      if (frame) window.cancelAnimationFrame(frame);
+    };
+  }, [pathname]);
+
+  useEffect(() => setOpen(false), [pathname]);
 
   useEffect(() => {
-    const handleScroll = () => {
-      if (mobileOpen) setMobileOpen(false);
-    };
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, [mobileOpen]);
+    if (!open) return undefined;
+    const onKey = (e) => e.key === 'Escape' && setOpen(false);
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [open]);
+
+  const isCurrent = (hash) => (onProjectPage ? hash === 'projects' : active === hash);
+
+  const links = NAV_ITEMS.map((item) => (
+    <li key={item.hash}>
+      <Link
+        to={{ pathname: '/', hash: `#${item.hash}` }}
+        aria-current={isCurrent(item.hash) ? 'true' : undefined}
+        onClick={() => {
+          setOpen(false);
+          lockActive(item.hash); // [PERUBAHAN 4d] warna langsung pindah ke menu yang diklik
+        }}
+      >
+        {item.label}
+      </Link>
+    </li>
+  ));
+
+  const socials = (
+    <ul className="pf-socials">
+      {SOCIALS.map((s) => (
+        <li key={s.label}>
+          <a href={s.href} target="_blank" rel="noreferrer" aria-label={s.label}>
+            <i className={s.icon} aria-hidden="true"></i>
+          </a>
+        </li>
+      ))}
+    </ul>
+  );
 
   return (
     <>
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+      {/* [PERUBAHAN 1: NAVBAR] class dinamis: 'is-full-width' (awal, full kiri-kanan) -> 'is-scrolled' (floating/menciut saat scroll). Style-nya ada di portfolio-patch.css */}
+      <header className={`pf-header pf-glass ${scrolled ? 'is-scrolled' : 'is-full-width'}`}>
+        <Link to={{ pathname: '/', hash: '#home' }} className="pf-brand" aria-label={`${PROFILE.name}, home`}>
+          {PROFILE.brand}
+        </Link>
 
-        :root {
-          --choco-900: #24140f;
-          --choco-800: #321c14;
-          --choco-700: #4a2a1d;
-          --cream-50: #fff8ed;
-          --cream-100: #f6ead7;
-          --caramel: #c98545;
-          --gradient-glass: linear-gradient(145deg, rgba(50, 28, 20, 0.94), rgba(36, 20, 15, 0.88));
-          --glass-border: rgba(255, 248, 237, 0.16);
-          --glass-shadow: 0 24px 80px rgba(36, 20, 15, 0.18), inset 0 1px 0 rgba(255, 248, 237, 0.12);
-          --transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
-          --radius-lg: 28px;
-        }
+        <nav aria-label="Main">
+          <ul className="pf-nav">{links}</ul>
+        </nav>
 
-        @keyframes slideDown {
-          from {
-            transform: translateX(-50%) translateY(-120px);
-            opacity: 0;
-          }
-          to {
-            transform: translateX(-50%) translateY(0);
-            opacity: 1;
-          }
-        }
+        {socials}
 
-        @keyframes expandLine {
-          from { width: 0; opacity: 0; }
-          to { width: 20px; opacity: 1; }
-        }
+        <button
+          type="button"
+          className="pf-burger"
+          aria-expanded={open}
+          aria-controls="pf-mobile-menu"
+          aria-label={open ? 'Close menu' : 'Open menu'}
+          onClick={() => setOpen((v) => !v)}
+        >
+          <i className={`fas fa-${open ? 'xmark' : 'bars'}`} aria-hidden="true"></i>
+        </button>
+      </header>
 
-        /* NAVBAR UTAMA - Desain seperti screenshot */
-        .navbar-premium {
-          position: fixed;
-          top: 20px;
-          left: 50%;
-          transform: translateX(-50%);
-          width: 92%;
-          max-width: 1200px;
-          background: var(--gradient-glass);
-          backdrop-filter: blur(24px) saturate(200%);
-          -webkit-backdrop-filter: blur(24px) saturate(200%);
-          border-radius: var(--radius-lg);
-          border: 1px solid var(--glass-border);
-          box-shadow: var(--glass-shadow);
-          padding: 0.5rem 1.8rem;
-          z-index: 1000;
-          transition: var(--transition);
-          animation: slideDown 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
-        }
-
-        .navbar-premium.scrolled {
-          background: linear-gradient(145deg, rgba(50, 28, 20, 0.96), rgba(36, 20, 15, 0.92));
-          border-color: var(--glass-border);
-          box-shadow: 0 18px 58px rgba(36, 20, 15, 0.20);
-          top: 10px;
-          padding: 0.4rem 1.5rem;
-        }
-
-        /* BRAND - Font bold seperti easylog */
-        .navbar-brand {
-          font-weight: 800;
-          font-size: 1.6rem;
-          color: #fff8ed;
-          letter-spacing: -0.5px;
-          text-decoration: none;
-          display: flex;
-          align-items: center;
-          gap: 0.6rem;
-          font-family: 'Inter', sans-serif;
-        }
-
-        .navbar-brand .brand-text {
-          background: linear-gradient(135deg, #fff2d8, #d79a58);
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
-          background-clip: text;
-        }
-
-        /* NAV LINKS - Style minimalis seperti screenshot */
-        .nav-links {
-          display: flex;
-          align-items: center;
-          gap: 0.3rem;
-        }
-
-        .nav-link-premium {
-          color: rgba(255, 248, 237, 0.7);
-          font-weight: 500;
-          padding: 0.5rem 1rem;
-          border-radius: 12px;
-          transition: var(--transition);
-          text-decoration: none;
-          font-size: 0.9rem;
-          position: relative;
-          font-family: 'Inter', sans-serif;
-          letter-spacing: 0.3px;
-        }
-
-        .nav-link-premium:hover {
-          color: #fff2d8;
-          background: rgba(255, 248, 237, 0.06);
-        }
-
-        .nav-link-premium.active {
-          color: #fff2d8;
-          background: rgba(255, 248, 237, 0.06);
-        }
-
-        .nav-link-premium.active::after {
-          content: '';
-          position: absolute;
-          bottom: 2px;
-          left: 50%;
-          transform: translateX(-50%);
-          width: 20px;
-          height: 2.5px;
-          background: linear-gradient(135deg, #fff2d8, #c98545);
-          border-radius: 4px;
-          animation: expandLine 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
-        }
-
-        /* BUTTON SAVE - Style seperti di screenshot */
-        .nav-cta {
-          background: linear-gradient(135deg, #fff2d8, #c98545) !important;
-          color: #24140f !important;
-          padding: 0.5rem 1.8rem !important;
-          border-radius: 50px !important;
-          box-shadow: 0 4px 16px rgba(36, 20, 15, 0.22);
-          font-weight: 700 !important;
-          font-family: 'Inter', sans-serif !important;
-          font-size: 0.85rem !important;
-          letter-spacing: 0.3px;
-        }
-
-        .nav-cta:hover {
-          transform: translateY(-2px) scale(1.02);
-          box-shadow: 0 6px 28px rgba(201, 133, 69, 0.35);
-          color: #24140f !important;
-        }
-
-        /* MOBILE TOGGLE */
-        .nav-toggle {
-          display: none;
-          background: none;
-          border: none;
-          font-size: 1.5rem;
-          color: #fff2d8;
-          padding: 0.25rem 0.5rem;
-          border-radius: 8px;
-          transition: var(--transition);
-          cursor: pointer;
-        }
-
-        .nav-toggle:hover {
-          background: rgba(255, 248, 237, 0.06);
-        }
-
-        /* MOBILE MENU */
-        .nav-mobile {
-          display: none;
-          position: fixed;
-          top: 80px;
-          left: 5%;
-          right: 5%;
-          background: var(--gradient-glass);
-          backdrop-filter: blur(24px);
-          border-radius: var(--radius-lg);
-          border: 1px solid var(--glass-border);
-          padding: 1.5rem;
-          box-shadow: var(--glass-shadow);
-          z-index: 999;
-          flex-direction: column;
-          gap: 0.5rem;
-          animation: slideDown 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-        }
-
-        .nav-mobile.open {
-          display: flex;
-        }
-
-        .nav-mobile a {
-          padding: 0.75rem 1rem;
-          border-radius: 12px;
-          text-decoration: none;
-          color: rgba(255, 248, 237, 0.76);
-          font-weight: 500;
-          transition: var(--transition);
-          font-family: 'Inter', sans-serif;
-          letter-spacing: 0.3px;
-        }
-
-        .nav-mobile a:hover,
-        .nav-mobile a.active {
-          color: #fff2d8;
-          background: rgba(255, 248, 237, 0.10);
-        }
-
-        .nav-mobile .nav-cta-mobile {
-          background: linear-gradient(135deg, #fff2d8, #c98545);
-          color: #24140f !important;
-          text-align: center;
-          margin-top: 0.5rem;
-          border-radius: 12px;
-          font-weight: 700;
-          font-family: 'Inter', sans-serif !important;
-        }
-
-        @media (max-width: 768px) {
-          .nav-links {
-            display: none !important;
-          }
-          .nav-toggle {
-            display: block !important;
-          }
-          .navbar-premium {
-            padding: 0.4rem 1rem;
-            top: 10px;
-            border-radius: 18px;
-          }
-          .navbar-brand {
-            font-size: 1.3rem;
-          }
-        }
-      `}</style>
-
-      <nav className={`navbar-premium ${scrolled ? 'scrolled' : ''}`}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          {/* Brand - 4naa dengan style bold seperti easylog */}
-          <Link to="/" className="navbar-brand">
-            <span className="brand-text">4naa</span>
-          </Link>
-
-          {/* Desktop Navigation - ISI TETAP SAMA */}
-          <div className="nav-links">
-            <Link to="/" className={`nav-link-premium ${isActive('/') ? 'active' : ''}`}>Home</Link>
-            <a href="/#skills" className={`nav-link-premium ${location.pathname === '/' ? '' : ''}`}>Skills</a>
-            {!isProjectPage && (
-              <Link to="/project" className="nav-link-premium nav-cta">
-                <i className="fas fa-folder-open me-1"></i>View Project
-              </Link>
-            )}
-          </div>
-
-          {/* Mobile Toggle */}
-          <button 
-            className="nav-toggle" 
-            ref={toggleRef}
-            onClick={() => setMobileOpen(!mobileOpen)}
-          >
-            <i className={`fas fa-${mobileOpen ? 'times' : 'bars'}`}></i>
-          </button>
-        </div>
-      </nav>
-
-      {/* Mobile Menu - ISI TETAP SAMA */}
-      <div className={`nav-mobile ${mobileOpen ? 'open' : ''}`} ref={mobileRef}>
-        <Link to="/" className={isActive('/') ? 'active' : ''} onClick={() => setMobileOpen(false)}>Home</Link>
-        <a href="/#skills" onClick={() => setMobileOpen(false)}>Skills</a>
-        {!isProjectPage && (
-          <Link to="/project" className="nav-cta-mobile" onClick={() => setMobileOpen(false)}>
-            <i className="fas fa-folder-open me-2"></i>View Project
-          </Link>
-        )}
+      <div id="pf-mobile-menu" className={`pf-mobile pf-glass ${open ? 'is-open' : ''}`}>
+        <ul className="pf-mobile__list">{links}</ul>
+        {socials}
       </div>
-
-      {/* Backdrop */}
-      {mobileOpen && (
-        <div 
-          style={{
-            position: 'fixed',
-            inset: 0,
-            zIndex: 998,
-            backgroundColor: 'transparent',
-          }}
-          onClick={() => setMobileOpen(false)}
-        />
-      )}
     </>
   );
 }

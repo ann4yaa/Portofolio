@@ -8,6 +8,11 @@ node_modules/
 *.md
 !README.md
 .vercel/
+admin/
+backend/
+server.js
+scripts/
+encrypt-data.js
 
 # ❌ JANGAN TAMBAHKAN INI:
 # public/assets/

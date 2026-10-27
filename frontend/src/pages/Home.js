@@ -1,1334 +1,459 @@
-// Home.js - Fix dengan background leopard statis + font button Playfair
-import React, { useState, useEffect, useRef } from 'react';
-import { Link } from 'react-router-dom';
+// Home.js - Hero (gambar 2) → About → Tech stack berjalan → 3 project terbaru → Contact
+// Animasi: GSAP + ScrollTrigger. Install: npm i gsap
+import React, { useEffect, useRef, useState } from 'react';
+import { Link, useLocation } from 'react-router-dom';
+
 import Navbar from '../components/Navbar';
-import DOMPurify from 'dompurify'; // 🔒 TAMBAHKAN INI
-import { fetchPublicProjects } from '../utils/projectData';
+import Footer from '../components/Footer';
+import TechMarquee from '../components/TechMarquee';
+import ProjectCard from '../components/ProjectCard';
+import ProjectCardSkeleton from '../components/ProjectCardSkeleton';
+import ContactForm from '../components/ContactForm';
+import { PROFILE, SOCIALS, SKILLS } from '../data/siteData';
+import { fetchHomeProjects } from '../utils/projectData';
+import { loadGsap } from '../utils/gsap';
+import { isValidProject } from '../utils/projectHelpers';
+import '../styles/portfolio.css';
 
-const nama = 'Hagia Sofiana';
-const tentang =
-  'Full Stack Developer specializing in modern web and mobile development. Proficient in PHP, Laravel, JavaScript, React, Python, Java, and MySQL, with a passion for building scalable applications, writing clean code, and continuously exploring new technologies.';
-const skills = ['HTML', 'CSS', 'JavaScript', 'PHP', 'MySQL', 'Python', 'Bootstrap', 'Java', 'React', 'Vite'];
-
-const roles = [
-  'Software Engineer',
-  'Full Stack',
-  'Web Development',
-  'Mobile Development',
-  'Desktop Development'
-];
-
-export default function Home() {
-  const [recentProjects, setRecentProjects] = useState([]);
-  const [totalProject, setTotalProject] = useState(0);
-  const [isLoaded, setIsLoaded] = useState(false);
-  const [roleIndex, setRoleIndex] = useState(0);
-  const [loading, setLoading] = useState(true);
-  const cardRefs = useRef([]);
-
-  useEffect(() => {
-    window.scrollTo(0, 0);
-  }, []);
-
-  // 🔒 FETCH DENGAN VALIDASI DATA
-  useEffect(() => {
-    fetchPublicProjects()
-      .then((projects) => {
-        console.log('✅ Data dari API:', projects);
-
-        // Validasi setiap project
-        const validProjects = projects.filter(p => {
-          return (
-            typeof p === 'object' &&
-            p !== null &&
-            typeof p.id === 'number' &&
-            typeof p.nama_project === 'string' &&
-            p.nama_project.length > 0 &&
-            typeof p.deskripsi === 'string' &&
-            Array.isArray(p.teknologi)
-          );
-        });
-        
-        console.log('✅ Data valid:', validProjects.length, 'project');
-        
-        if (validProjects.length > 0) {
-          const recent = validProjects.slice(0, 3);
-          setRecentProjects(recent);
-          setTotalProject(validProjects.length);
-        } else {
-          setRecentProjects([]);
-          setTotalProject(0);
-        }
-        setLoading(false);
-      })
-      .catch((err) => {
-        console.error('❌ Gagal membaca project:', err);
-        setRecentProjects([]);
-        setTotalProject(0);
-        setLoading(false);
-      });
-  }, []);
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setRoleIndex((prev) => (prev + 1) % roles.length);
-    }, 3000);
-    return () => clearInterval(interval);
-  }, []);
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsLoaded(true);
-    }, 100);
-    return () => clearTimeout(timer);
-  }, []);
-
-  useEffect(() => {
-    if (!isLoaded || loading) return;
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry, i) => {
-          if (entry.isIntersecting) {
-            setTimeout(() => {
-              entry.target.style.opacity = '1';
-              entry.target.style.transform = 'translateY(0)';
-            }, i * 100);
-          }
-        });
-      },
-      { threshold: 0.1, rootMargin: '0px 0px -50px 0px' }
-    );
-
-    cardRefs.current.forEach((el) => {
-      if (el) {
-        el.style.opacity = '0';
-        el.style.transform = 'translateY(30px)';
-        el.style.transition = 'all 0.7s cubic-bezier(0.34,1.56,0.64,1)';
-        observer.observe(el);
-      }
-    });
-    return () => observer.disconnect();
-  }, [isLoaded, loading, recentProjects]);
-
-  if (loading) {
-    return (
-      <>
-        <Navbar />
-        <div style={{
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          minHeight: '100vh',
-          color: '#3d251a',
-          fontSize: '1.2rem'
-        }}>
-          <div style={{ textAlign: 'center' }}>
-            <div style={{
-              width: '40px',
-              height: '40px',
-              border: '4px solid #c98545',
-              borderTopColor: 'transparent',
-              borderRadius: '50%',
-              animation: 'spin 1s linear infinite',
-              margin: '0 auto 1rem'
-            }} />
-            <p>Loading data...</p>
-            <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-          </div>
-        </div>
-      </>
-    );
-  }
-
+// Pecah teks jadi huruf-huruf bermasker untuk animasi masuk
+function Letters({ text }) {
   return (
     <>
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=Inter:wght@300;400;500;600;700;800;900&display=swap');
-
-        :root {
-          --choco-900: #1a0f0a;
-          --choco-800: #2c1a12;
-          --choco-700: #3d251a;
-          --choco-600: #5a3828;
-          --cream-50: #fdf6ee;
-          --cream-100: #f5e8d8;
-          --cream-200: #e8d4be;
-          --caramel: #c98545;
-          --caramel-light: #e8b87a;
-          --pink-soft: #f5c6d0;
-          --pink-mid: #e8a0b0;
-          --gold: #d4a055;
-          --gradient-main: linear-gradient(145deg, #2c1a12 0%, #5a3828 60%, #c98545 100%);
-          --gradient-glass: linear-gradient(145deg, rgba(44, 26, 18, 0.95), rgba(26, 15, 10, 0.92));
-          --glass-border: rgba(253, 246, 238, 0.10);
-          --glass-shadow: 0 20px 60px rgba(26, 15, 10, 0.3);
-          --radius-xl: 32px;
-          --radius-lg: 24px;
-          --radius-md: 16px;
-          --transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
-          --font-display: 'Playfair Display', serif;
-          --font-body: 'Inter', sans-serif;
-        }
-
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-
-        body {
-          background:
-            radial-gradient(ellipse at 20% 30%, rgba(201, 133, 69, 0.08), transparent 50%),
-            radial-gradient(ellipse at 80% 70%, rgba(90, 56, 40, 0.06), transparent 45%),
-            linear-gradient(160deg, #fdf6ee 0%, #f5e8d8 40%, #e8d4be 100%);
-          color: var(--choco-900);
-          min-height: 100vh;
-          font-family: var(--font-body);
-          position: relative;
-          overflow-x: hidden;
-        }
-
-        /* ========== LEOPARD BACKGROUND PATTERN (STATIS) ========== */
-        body::before {
-          content: '';
-          position: fixed;
-          inset: 0;
-          z-index: 0;
-          pointer-events: none;
-          background-image: 
-            radial-gradient(ellipse at 18% 18%, rgba(201, 133, 69, 0.25) 0 6px, rgba(201, 133, 69, 0.08) 7px 12px, transparent 13px),
-            radial-gradient(ellipse at 72% 28%, rgba(61, 37, 26, 0.20) 0 5px, rgba(201, 133, 69, 0.06) 6px 10px, transparent 11px),
-            radial-gradient(ellipse at 36% 74%, rgba(201, 133, 69, 0.20) 0 4px, rgba(61, 37, 26, 0.06) 5px 9px, transparent 10px),
-            radial-gradient(ellipse at 82% 72%, rgba(61, 37, 26, 0.18) 0 5px, rgba(201, 133, 69, 0.05) 6px 11px, transparent 12px),
-            radial-gradient(ellipse at 10% 50%, rgba(201, 133, 69, 0.15) 0 4px, rgba(61, 37, 26, 0.04) 5px 8px, transparent 9px),
-            radial-gradient(ellipse at 55% 90%, rgba(201, 133, 69, 0.22) 0 5px, rgba(61, 37, 26, 0.06) 6px 10px, transparent 11px),
-            radial-gradient(ellipse at 90% 55%, rgba(61, 37, 26, 0.18) 0 4px, rgba(201, 133, 69, 0.05) 5px 9px, transparent 10px),
-            radial-gradient(ellipse at 45% 10%, rgba(201, 133, 69, 0.20) 0 5px, rgba(61, 37, 26, 0.06) 6px 11px, transparent 12px);
-          background-size: 180px 160px, 200px 180px, 220px 200px, 190px 170px, 160px 140px, 210px 190px, 170px 150px, 230px 210px;
-          opacity: 0.6;
-        }
-
-        .bg-orb{position:absolute;border-radius:50%;filter:blur(100px);animation:floatOrb 25s ease-in-out infinite;pointer-events:none}
-        .bg-orb:nth-child(1){width:500px;height:500px;background:#c98545;top:-200px;right:-120px;opacity:0.08}
-        .bg-orb:nth-child(2){width:400px;height:400px;background:#5a3828;bottom:-120px;left:-100px;animation-delay:-8s;opacity:0.10}
-        .bg-orb:nth-child(3){width:300px;height:300px;background:#2c1a12;top:50%;left:30%;animation-delay:-16s;opacity:0.06}
-
-        @keyframes floatOrb {
-          0%,100%{transform:translate(0,0)scale(1)}
-          25%{transform:translate(30px,-40px)scale(1.1)}
-          50%{transform:translate(-20px,20px)scale(0.9)}
-          75%{transform:translate(40px,25px)scale(1.05)}
-        }
-        @keyframes gradientMove {
-          0%,100%{background-position:0% 50%}
-          50%{background-position:100% 50%}
-        }
-        @keyframes shimmer {
-          0%,100%{background-position:0% 50%}
-          50%{background-position:100% 50%}
-        }
-        @keyframes pulseBadge {
-          0%,100%{transform:scale(1)}
-          50%{transform:scale(1.02)}
-        }
-        @keyframes fadeInUp {
-          from{opacity:0;transform:translateY(40px)}
-          to{opacity:1;transform:translateY(0)}
-        }
-        @keyframes heartBeat {
-          0%,100%{transform:scale(1)}
-          14%{transform:scale(1.25)}
-          28%{transform:scale(1)}
-          42%{transform:scale(1.25)}
-          56%{transform:scale(1)}
-        }
-        @keyframes roleChange {
-          0%{opacity:0;transform:translateY(-8px)}
-          12%{opacity:1;transform:translateY(0)}
-          88%{opacity:1;transform:translateY(0)}
-          100%{opacity:0;transform:translateY(8px)}
-        }
-        @keyframes heroShimmer {
-          0% { background-position: -200% center; }
-          100% { background-position: 200% center; }
-        }
-        @keyframes heroGlowPulse {
-          0%,100% { box-shadow: 0 20px 60px rgba(26,15,10,0.3), inset 0 1px 0 rgba(253,246,238,0.08); }
-          50% { box-shadow: 0 20px 80px rgba(201,133,69,0.12), 0 20px 60px rgba(26,15,10,0.3), inset 0 1px 0 rgba(253,246,238,0.12); }
-        }
-        @keyframes profileFloat {
-          0%,100%{transform:translateY(0px)}
-          50%{transform:translateY(-5px)}
-        }
-        @keyframes shimmerBorder {
-          0% { background-position: -300% center; }
-          100% { background-position: 300% center; }
-        }
-        @keyframes glowPulse {
-          0%,100% { box-shadow: 0 0 40px rgba(201,133,69,0.03), 0 0 80px rgba(232,160,176,0.01); }
-          50% { box-shadow: 0 0 60px rgba(201,133,69,0.10), 0 0 120px rgba(232,160,176,0.03); }
-        }
-        @keyframes skillFloat {
-          0%,100%{transform:translateY(0px)}
-          50%{transform:translateY(-4px)}
-        }
-        @keyframes skillIconSpin {
-          0%{transform:rotate(0deg)}
-          100%{transform:rotate(360deg)}
-        }
-        @keyframes techGlow {
-          0%,100%{box-shadow:0 0 20px rgba(201,133,69,0.05)}
-          50%{box-shadow:0 0 40px rgba(201,133,69,0.12)}
-        }
-        @keyframes shine {
-          0% { left: -100%; }
-          100% { left: 100%; }
-        }
-
-        .main-content{position:relative;z-index:1;padding-top:100px}
-
-        .hero-section{padding:0.5rem 0 2rem;animation:fadeInUp 1s cubic-bezier(0.34,1.56,0.64,1)}
-        
-        .hero-glass{
-          background: var(--gradient-glass);
-          border-radius: var(--radius-xl);
-          border: 1px solid var(--glass-border);
-          box-shadow: var(--glass-shadow);
-          padding: 1.5rem 2rem;
-          position: relative;
-          overflow: hidden;
-          color: var(--cream-50);
-          animation: heroGlowPulse 4s ease-in-out infinite;
-          transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
-          backdrop-filter: blur(20px);
-        }
-
-        .hero-glass::before {
-          content: '';
-          position: absolute;
-          top: 0;
-          left: 0;
-          width: 100%;
-          height: 100%;
-          background: linear-gradient(
-            105deg,
-            transparent 20%,
-            rgba(253,246,238,0.02) 40%,
-            rgba(253,246,238,0.05) 50%,
-            rgba(253,246,238,0.02) 60%,
-            transparent 80%
-          );
-          background-size: 300% 100%;
-          z-index: 0;
-          pointer-events: none;
-          animation: heroShimmer 6s ease-in-out infinite;
-          border-radius: var(--radius-xl);
-        }
-
-        .hero-glass::after {
-          content: '';
-          position: absolute;
-          inset: 0;
-          border-radius: var(--radius-xl);
-          padding: 1px;
-          background: linear-gradient(
-            135deg,
-            transparent 30%,
-            rgba(201,133,69,0.06),
-            rgba(245,198,208,0.04),
-            rgba(201,133,69,0.06),
-            transparent 70%
-          );
-          background-size: 300% 300%;
-          -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-          -webkit-mask-composite: xor;
-          mask-composite: exclude;
-          animation: heroShimmer 4s linear infinite;
-          z-index: 0;
-          pointer-events: none;
-        }
-
-        .hero-glass:hover {
-          box-shadow: 0 20px 80px rgba(26,15,10,0.35), 0 0 40px rgba(201,133,69,0.04);
-          border-color: rgba(253,246,238,0.14);
-        }
-
-        .hero-glass > * {
-          position: relative;
-          z-index: 1;
-        }
-
-        /* ================================================================ */
-        /* ========== OVAL PROFILE ========================================= */
-        /* ================================================================ */
-        .profile-wrapper {
-          position: relative;
-          display: inline-block;
-          animation: profileFloat 6s ease-in-out infinite;
-          padding: 5px;
-        }
-
-        .profile-border {
-          position: absolute;
-          inset: -3px;
-          border-radius: 50% 50% 50% 50% / 40% 40% 60% 60%;
-          background: linear-gradient(
-            135deg,
-            #3d251a,
-            #c98545,
-            #e8b87a,
-            #f5c6d0,
-            #c98545,
-            #3d251a
-          );
-          background-size: 400% 400%;
-          animation: shimmerBorder 5s linear infinite;
-          z-index: 0;
-          opacity: 0.4;
-          transition: opacity 0.5s ease;
-        }
-
-        .profile-wrapper:hover .profile-border {
-          opacity: 0.9;
-        }
-
-        .profile-glow {
-          position: absolute;
-          inset: -15px;
-          border-radius: 50% 50% 50% 50% / 40% 40% 60% 60%;
-          background: radial-gradient(circle, rgba(201,133,69,0.06), transparent 70%);
-          filter: blur(30px);
-          animation: glowPulse 4s ease-in-out infinite;
-          z-index: -1;
-        }
-
-        .profile-shimmer {
-          position: absolute;
-          top: 0;
-          left: 0;
-          width: 100%;
-          height: 100%;
-          border-radius: 50% 50% 50% 50% / 40% 40% 60% 60%;
-          background: linear-gradient(
-            105deg,
-            transparent 30%,
-            rgba(253,246,238,0.03) 45%,
-            rgba(253,246,238,0.06) 50%,
-            rgba(253,246,238,0.03) 55%,
-            transparent 70%
-          );
-          background-size: 300% 100%;
-          z-index: 3;
-          pointer-events: none;
-          animation: heroShimmer 5s ease-in-out infinite;
-        }
-
-        .profile-image {
-          width: 220px;
-          height: 280px;
-          object-fit: cover;
-          display: block;
-          border-radius: 50% 50% 50% 50% / 40% 40% 60% 60%;
-          border: 2px solid rgba(253,246,238,0.06);
-          position: relative;
-          z-index: 2;
-          transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
-          background: linear-gradient(145deg, #f5e8d8, #fdf6ee);
-        }
-
-        .profile-image:hover {
-          transform: scale(1.04);
-          border-color: rgba(253,246,238,0.15);
-        }
-
-        /* ================================================================ */
-/* ========== NONAKTIFKAN ANIMASI DI MOBILE & TABLET ============== */
-/* ================================================================ */
-
-@media (max-width: 992px) {
-  /* Nonaktifkan animasi profile naik turun */
-  .profile-wrapper {
-    animation: none !important;
-  }
-  
-  /* Nonaktifkan animasi border berkilau */
-  .profile-border {
-    animation: none !important;
-  }
-  
-  /* Nonaktifkan animasi glow */
-  .profile-glow {
-    animation: none !important;
-  }
-  
-  /* Nonaktifkan animasi shimmer pada profile */
-  .profile-shimmer {
-    animation: none !important;
-  }
-  
-  /* Nonaktifkan animasi hero glass */
-  .hero-glass {
-    animation: none !important;
-  }
-  
-  /* Nonaktifkan animasi shimmer border hero glass */
-  .hero-glass::before,
-  .hero-glass::after {
-    animation: none !important;
-  }
-  
-  /* Nonaktifkan animasi skill floating */
-  .skill-tag-wrapper {
-    animation: none !important;
-  }
-  
-  /* Nonaktifkan animasi badge pulse */
-  .hero-badge {
-    animation: none !important;
-  }
-  
-  /* Nonaktifkan animasi stat item hover */
-  .stat-item:hover {
-    transform: none !important;
-  }
-  
-  /* Nonaktifkan animasi project card hover */
-  .project-card:hover {
-    transform: none !important;
-  }
-  
-  /* Nonaktifkan animasi shimmer pada button */
-  .btn-primary-custom {
-    animation: none !important;
-  }
-  
-  .btn-primary-custom:hover {
-    animation: none !important;
-  }
+      {text.split('').map((c, i) => (
+        <span className="pf-mask" key={i} aria-hidden="true">
+          <span className="pf-char">{c}</span>
+        </span>
+      ))}
+    </>
+  );
 }
 
-        /* ================================================================ */
-        /* ========== END PROFILE ========================================== */
-        /* ================================================================ */
+export default function Home() {
+  const location = useLocation();
+  const rootRef = useRef(null);
+  const heroRef = useRef(null);
+  const heroVideoRef = useRef(null);
 
-        .hero-badge{
-          display:inline-flex;
-          align-items:center;
-          gap:0.6rem;
-          background:rgba(253,246,238,0.06);
-          color:#e8b87a;
-          padding:0.4rem 1.4rem;
-          border-radius:50px;
-          font-size:0.8rem;
-          font-weight:600;
-          margin-bottom:1.2rem;
-          border:1px solid rgba(253,246,238,0.08);
-          animation:pulseBadge 2.5s ease-in-out infinite;
-          font-family: var(--font-body);
-        }
-        .hero-title{
-          font-family: var(--font-display);
-          font-size:3.2rem;
-          font-weight:900;
-          line-height:1.08;
-          margin-bottom:0.75rem;
-          letter-spacing:-0.5px;
-          color:#fdf6ee;
-        }
-        .hero-title .highlight{
-          background:linear-gradient(135deg,#fdf6ee,#e8b87a,#c98545);
-          -webkit-background-clip:text;
-          -webkit-text-fill-color:transparent;
-          background-clip:text;
-          background-size:200% 200%;
-          animation:gradientMove 4s ease-in-out infinite;
-        }
-        .hero-title .role-text {
-          background:linear-gradient(120deg,#fdf6ee 0%,#e8b87a 35%,#fdf6ee 55%,#c98545 78%,#fdf6ee 100%);
-          -webkit-background-clip:text;
-          -webkit-text-fill-color:transparent;
-          background-clip:text;
-          background-size:260% 260%;
-          animation:gradientMove 4s ease-in-out infinite, roleChange 3s ease-in-out infinite;
-          display:inline-block;
-          font-style:italic;
-        }
-        .hero-subtitle{
-          font-size:1rem;
-          color:rgba(253,246,238,0.7);
-          max-width:480px;
-          margin-bottom:1.8rem;
-          line-height:1.8;
-          font-weight:400;
-        }
+  const [projects, setProjects] = useState([]);
+  const [total, setTotal] = useState(0);
+  const [status, setStatus] = useState('loading'); // loading | ready | error
 
-        .hero-actions {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 0.8rem;
-          margin-bottom: 1.5rem;
-          max-width: 480px;
-        }
+  useEffect(() => {
+    const video = heroVideoRef.current;
+    if (!video) return undefined;
 
-        /* ================================================================ */
-        /* ========== BUTTON STYLE - FONT PLAYFAIR ========================= */
-        /* ================================================================ */
+    let isInView = false;
+    let startTimer;
+    const motionPreference = window.matchMedia('(prefers-reduced-motion: reduce)');
 
-        .btn-primary-custom {
-          background: linear-gradient(135deg, #fff2d8, #c98545);
-          background-size: 200% 200%;
-          color: #1a0f0a;
-          border: none;
-          padding: 0.85rem 2.6rem;
-          border-radius: 50px;
-          font-weight: 700;
-          font-size: 1rem;
-          transition: var(--transition);
-          box-shadow: 0 4px 20px rgba(201, 133, 69, 0.3);
-          text-decoration: none;
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          gap: 0.6rem;
-          animation: shimmer 3s ease-in-out infinite;
-          cursor: pointer;
-          width: 100%;
-          text-align: center;
-          font-family: var(--font-display); /* ← PLAYFAIR DISPLAY */
-          position: relative;
-          overflow: hidden;
-        }
+    const syncPlayback = () => {
+      const shouldPlay =
+        isInView && document.visibilityState === 'visible' && !motionPreference.matches;
 
-        .btn-primary-custom::before {
-          content: '';
-          position: absolute;
-          top: 0;
-          left: -100%;
-          width: 100%;
-          height: 100%;
-          background: linear-gradient(90deg, transparent, rgba(255,255,255,0.25), transparent);
-          transition: left 0.6s ease;
-        }
+      if (!shouldPlay) {
+        window.clearTimeout(startTimer);
+        startTimer = undefined;
+        video.pause();
+        return;
+      }
 
-        .btn-primary-custom:hover::before {
-          left: 100%;
-        }
+      if (video.paused && startTimer === undefined) {
+        startTimer = window.setTimeout(() => {
+          startTimer = undefined;
+          if (!isInView || document.visibilityState !== 'visible' || motionPreference.matches) return;
+          video.play().catch((error) => {
+            if (error.name !== 'AbortError') console.error('Failed to play hero video:', error);
+          });
+        }, 180);
+      }
+    };
 
-        .btn-primary-custom:hover {
-          transform: translateY(-4px) scale(1.03);
-          box-shadow: 0 8px 40px rgba(201, 133, 69, 0.5);
-          color: #1a0f0a;
-          background: linear-gradient(135deg, #d4a055, #f0c88a, #d4a055);
-          background-size: 200% 200%;
-          animation: shimmer 3s ease-in-out infinite;
-        }
+    const observer = 'IntersectionObserver' in window
+      ? new IntersectionObserver(([entry]) => {
+          isInView = entry.isIntersecting;
+          syncPlayback();
+        }, { rootMargin: '100px 0px' })
+      : null;
 
-        .btn-outline-custom {
-          background: linear-gradient(135deg, #3d251a, #5a3828);
-          color: #fdf6ee;
-          border: 2px solid rgba(201, 133, 69, 0.3);
-          padding: 0.85rem 2.6rem;
-          border-radius: 50px;
-          font-weight: 700;
-          font-size: 1rem;
-          transition: var(--transition);
-          box-shadow: 0 4px 20px rgba(26, 15, 10, 0.25);
-          text-decoration: none;
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          gap: 0.6rem;
-          cursor: pointer;
-          width: 100%;
-          text-align: center;
-          font-family: var(--font-display); /* ← PLAYFAIR DISPLAY */
-          position: relative;
-          overflow: hidden;
-        }
+    if (observer) observer.observe(video);
+    else {
+      isInView = true;
+      syncPlayback();
+    }
 
-        .btn-outline-custom::before {
-          content: '';
-          position: absolute;
-          top: 0;
-          left: -100%;
-          width: 100%;
-          height: 100%;
-          background: linear-gradient(135deg, transparent, #fff2d8, #c98545, transparent);
-          transition: left 0.6s ease;
-        }
+    document.addEventListener('visibilitychange', syncPlayback);
+    motionPreference.addEventListener('change', syncPlayback);
 
-        .btn-outline-custom:hover::before {
-          left: 100%;
-        }
+    return () => {
+      window.clearTimeout(startTimer);
+      observer?.disconnect();
+      document.removeEventListener('visibilitychange', syncPlayback);
+      motionPreference.removeEventListener('change', syncPlayback);
+      video.pause();
+    };
+  }, []);
 
-        .btn-outline-custom:hover {
-          transform: translateY(-4px) scale(1.03);
-          box-shadow: 0 8px 40px rgba(201, 133, 69, 0.3);
-          color: #fdf6ee;
-          background: linear-gradient(135deg, #4a2d1f, #6b4228);
-          border-color: rgba(201, 133, 69, 0.5);
-        }
+  /* ---------- scroll ke section saat ada hash (#about, #contact, ...) ---------- */
+  useEffect(() => {
+    const id = location.hash.replace('#', '');
+    if (!id) {
+      window.scrollTo(0, 0);
+      return undefined;
+    }
+    const t = setTimeout(() => {
+      const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      document.getElementById(id)?.scrollIntoView({
+        behavior: reducedMotion ? 'auto' : 'smooth',
+        block: 'start',
+      });
+    }, 60);
+    return () => clearTimeout(t);
+  }, [location.key, location.hash]);
 
-        /* ================================================================ */
-        /* ========== SOCIAL MEDIA FIXED ================================== */
-        /* ================================================================ */
+  /* ---------- data project ---------- */
+  useEffect(() => {
+    const controller = new AbortController();
+    fetchHomeProjects({ signal: controller.signal })
+      .then(({ projects: list, total: projectCount }) => {
+        const valid = list.filter(isValidProject);
+        setProjects(valid.slice(0, 3));
+        setTotal(projectCount);
+        setStatus('ready');
+      })
+      .catch((err) => {
+        if (err.name === 'AbortError') return;
+        console.error('Failed to load projects:', err);
+        setStatus('error');
+      });
+    return () => controller.abort();
+  }, []);
 
-        .social-links {
-          display: flex;
-          gap: 0.75rem;
-          flex-wrap: wrap;
-        }
+  useEffect(() => {
+    if (status !== 'ready') return undefined;
+    let cancelled = false;
+    let frame;
+    loadGsap()
+      .then(({ ScrollTrigger }) => {
+        if (cancelled) return;
+        frame = requestAnimationFrame(() => ScrollTrigger.refresh());
+      })
+      .catch((error) => console.error('Failed to refresh scroll triggers:', error));
+    return () => {
+      cancelled = true;
+      if (frame) cancelAnimationFrame(frame);
+    };
+  }, [status]);
 
-        .social-link {
-          width: 46px;
-          height: 46px;
-          border-radius: 50%;
-          background: linear-gradient(135deg, rgba(61, 37, 26, 0.6), rgba(90, 56, 40, 0.4));
-          border: 1px solid rgba(201, 133, 69, 0.2);
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          color: #e8b87a;
-          text-decoration: none;
-          font-size: 1.2rem;
-          transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-          padding: 0;
-          margin: 0;
-          flex-shrink: 0;
-          position: relative;
-          z-index: 1;
-          overflow: hidden;
-        }
+  /* ---------- animasi hero ---------- */
+  useEffect(() => {
+    let cancelled = false;
+    let mm;
+    let animationContext;
+    loadGsap()
+      .then(({ gsap, ScrollTrigger }) => {
+        if (cancelled) return;
+        mm = gsap.matchMedia(rootRef);
+        animationContext = gsap.context(() => {
+          mm.add(
+            {
+              motion: '(prefers-reduced-motion: no-preference)',
+              finePointer: '(hover: hover) and (pointer: fine)',
+            },
+            (mediaContext) => {
+              const { motion, finePointer } = mediaContext.conditions;
+              if (!motion) return undefined;
 
-        .social-link::before {
-          content: '';
-          position: absolute;
-          inset: 0;
-          border-radius: 50%;
-          background: linear-gradient(135deg, #fff2d8, #c98545);
-          opacity: 0;
-          transition: opacity 0.4s ease;
-          z-index: -1;
-        }
+              const intro = gsap
+                .timeline({
+                  defaults: { ease: 'power4.out' },
+                })
+                .from('.pf-hero__portfolio .pf-char', { yPercent: 110, duration: 1.1, stagger: 0.05 })
+                .from('.pf-hero__word .pf-char', { yPercent: 120, duration: 1, stagger: 0.04 }, '-=0.8')
+                .from('.pf-hero__photo', { clipPath: 'inset(100% 0% 0% 0%)', duration: 1.2, ease: 'power3.inOut' }, '-=1.1')
+                .from('.pf-hero__roles li', { x: -28, duration: 0.7, stagger: 0.1 }, '-=0.5')
+                .from('.pf-hero__side > *, .pf-hero__links li', { y: 12, duration: 0.6, stagger: 0.06 }, '-=0.5');
 
-        .social-link:hover {
-          background: linear-gradient(135deg, #c98545, #e8b87a);
-          color: #1a0f0a;
-          transform: translateY(-5px) scale(1.12);
-          box-shadow: 0 8px 30px rgba(201, 133, 69, 0.35);
-          border-color: transparent;
-        }
+              if (window.location.hash && window.location.hash !== '#home') intro.progress(1);
 
-        .social-link:hover::before {
-          opacity: 1;
-        }
+              const outro = gsap
+                .timeline({ paused: true, defaults: { ease: 'power2.in', duration: 0.45 } })
+                .to('.pf-hero__portfolio, .pf-hero__word, .pf-hero__photo', {
+                  y: -24,
+                  opacity: 0,
+                  stagger: 0.06,
+                })
+                .to('.pf-hero__roles li, .pf-hero__side > *, .pf-hero__links li', {
+                  x: -18,
+                  opacity: 0,
+                  stagger: 0.04,
+                }, '<');
 
-        .social-link i {
-          position: relative;
-          z-index: 1;
-          transition: transform 0.3s ease;
-        }
+              ScrollTrigger.create({
+                trigger: heroRef.current,
+                start: 'top top',
+                end: 'bottom 30%',
+                onLeave: () => outro.play(0),
+                onEnterBack: () => outro.reverse(),
+                onLeaveBack: () => intro.restart(),
+              });
 
-        .social-link:hover i {
-          transform: scale(1.1);
-        }
+              const scrub = { trigger: heroRef.current, start: 'top top', end: 'bottom top', scrub: true };
+              gsap.to('.pf-hero__portfolio', { yPercent: -18, ease: 'none', scrollTrigger: scrub });
+              gsap.to('.pf-hero__word', { yPercent: 14, ease: 'none', scrollTrigger: scrub });
+              gsap.to('.pf-hero__photo', { yPercent: -15, ease: 'none', scrollTrigger: scrub });
 
-        .section-title{
-          font-family: var(--font-display);
-          font-size:2.4rem;
-          font-weight:800;
-          margin-bottom:0.75rem;
-          letter-spacing:-0.5px;
-          color:#1a0f0a;
-        }
-        .section-title .gradient-text{
-          background:linear-gradient(135deg,#3d251a,#5a3828,#c98545);
-          -webkit-background-clip:text;
-          -webkit-text-fill-color:transparent;
-          background-clip:text;
-          background-size:200% 200%;
-          animation:gradientMove 4s ease-in-out infinite;
-        }
-        .section-divider{
-          width:70px;
-          height:3px;
-          margin:1.2rem auto;
-          background:linear-gradient(90deg,#3d251a,#c98545,#e8b87a);
-          border-radius:4px;
-        }
-        .section-subtitle{
-          color:#6b4f3a;
-          font-size:1.05rem;
-          margin-bottom:2.5rem;
-          font-weight:400;
-        }
+              if (finePointer) {
+                const hero = heroRef.current;
+                const photoX = gsap.quickTo('.pf-hero__photo', 'x', { duration: 0.9, ease: 'power3' });
+                const onMove = (e) => {
+                  const ratio = e.clientX / window.innerWidth - 0.5;
+                  photoX(ratio * -26);
+                };
+                hero.addEventListener('pointermove', onMove);
+                return () => hero.removeEventListener('pointermove', onMove);
+              }
+              return undefined;
+            }
+          );
+        }, rootRef);
+      })
+      .catch((error) => console.error('Failed to initialize hero animations:', error));
 
-        /* ================================================================ */
-        /* ========== SKILL TAGS WITH ICONS & MOTION ====================== */
-        /* ================================================================ */
-        .skill-tag-wrapper {
-          display: inline-flex;
-          align-items: center;
-          gap: 0.5rem;
-          background: linear-gradient(145deg, #3d251a, #2c1a12);
-          padding: 0.65rem 1.4rem 0.65rem 1rem;
-          border-radius: 50px;
-          font-weight: 600;
-          font-size: 0.85rem;
-          color: #fdf6ee;
-          box-shadow: 0 4px 16px rgba(26, 15, 10, 0.2), inset 0 1px 0 rgba(253, 246, 238, 0.06);
-          transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-          margin: 0.35rem;
-          cursor: default;
-          flex-shrink: 0;
-          border: 1px solid rgba(253, 246, 238, 0.06);
-          animation: skillFloat 4s ease-in-out infinite;
-          font-family: var(--font-body);
-        }
+    return () => {
+      cancelled = true;
+      mm?.revert();
+      animationContext?.revert();
+    };
+  }, []);
 
-        .skill-tag-wrapper:nth-child(odd) { animation-delay: 0s; }
-        .skill-tag-wrapper:nth-child(even) { animation-delay: 0.5s; }
+  /* Judul, teks, dan foto masuk saat About terlihat, lalu kembali saat discroll ke atas. */
+  useEffect(() => {
+    let cancelled = false;
+    let mm;
+    let animationContext;
+    loadGsap()
+      .then(({ gsap }) => {
+        if (cancelled) return;
+        mm = gsap.matchMedia(rootRef);
+        animationContext = gsap.context(() => {
+          mm.add('(prefers-reduced-motion: no-preference)', () => {
+            const reveal = (target, from, trigger, endState = {}, start = 'top 82%') =>
+              gsap.fromTo(target, from, {
+                x: 0,
+                y: 0,
+                opacity: 1,
+                ...endState,
+                duration: 0.8,
+                ease: 'power3.out',
+                scrollTrigger: {
+                  trigger,
+                  start,
+                  once: true,
+                },
+              });
 
-        .skill-tag-wrapper .skill-icon {
-          width: 28px;
-          height: 28px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-size: 1.1rem;
-          border-radius: 50%;
-          background: rgba(253, 246, 238, 0.06);
-          color: #e8b87a;
-          transition: all 0.4s ease;
-          flex-shrink: 0;
-        }
+            reveal('.pf-about__title', { x: -36, opacity: 0 }, '.pf-about');
+            reveal(
+              '.pf-about__photo',
+              { x: -84, clipPath: 'inset(0% 100% 0% 0%)', opacity: 0 },
+              '.pf-about',
+              { clipPath: 'inset(0% 0% 0% 0%)' }
+            );
+            gsap.fromTo(
+              '.pf-about__content > *',
+              { x: 32, opacity: 0 },
+              {
+                x: 0,
+                opacity: 1,
+                duration: 0.75,
+                stagger: 0.12,
+                ease: 'power3.out',
+                scrollTrigger: {
+                  trigger: '.pf-about__content',
+                  start: 'top 82%',
+                  once: true,
+                },
+              }
+            );
+          });
+        }, rootRef);
+      })
+      .catch((error) => console.error('Failed to initialize section animations:', error));
+    return () => {
+      cancelled = true;
+      mm?.revert();
+      animationContext?.revert();
+    };
+  }, []);
 
-        .skill-tag-wrapper:hover {
-          background: linear-gradient(145deg, #fdf6ee, #f5e8d8);
-          color: #1a0f0a;
-          transform: translateY(-5px) scale(1.04);
-          box-shadow: 0 8px 32px rgba(201, 133, 69, 0.2);
-          border-color: rgba(201, 133, 69, 0.2);
-        }
+  const github = SOCIALS.find((s) => s.label === 'GitHub');
+  const instagram = SOCIALS.find((s) => s.label === 'Instagram');
+  const { about } = PROFILE;
 
-        .skill-tag-wrapper:hover .skill-icon {
-          background: linear-gradient(135deg, #c98545, #e8b87a);
-          color: #1a0f0a;
-          animation: skillIconSpin 1s ease-in-out;
-        }
-
-        /* ================================================================ */
-        /* ========== PROJECT CARD ========================================= */
-        /* ================================================================ */
-        .project-card{
-          background: var(--gradient-glass);
-          border-radius: var(--radius-lg);
-          overflow:hidden;
-          border:1px solid var(--glass-border);
-          box-shadow:var(--glass-shadow);
-          transition:var(--transition);
-          height:100%;
-          color:var(--cream-50);
-          backdrop-filter: blur(10px);
-        }
-        .project-card:hover{transform:translateY(-10px);box-shadow:0 24px 80px rgba(26,15,10,0.25)}
-        .project-card-img{
-          width:100%;
-          height:220px;
-          object-fit:cover;
-          display:block;
-        }
-        .project-card-body{padding:1.5rem}
-        .project-card-title{
-          font-family: var(--font-display);
-          font-size:1.1rem;
-          font-weight:700;
-          color:#fdf6ee;
-          margin-bottom:0.4rem;
-        }
-        .project-card-desc{
-          font-size:0.9rem;
-          color:rgba(253,246,238,0.7);
-          margin-bottom:1rem;
-          display:-webkit-box;
-          -webkit-line-clamp:2;
-          -webkit-box-orient:vertical;
-          overflow:hidden;
-        }
-        .project-tech{
-          display:flex;
-          flex-wrap:wrap;
-          gap:0.4rem;
-          margin-bottom:1.2rem;
-        }
-
-        .project-tech-badge{
-          background:rgba(253,246,238,0.06);
-          color:#e8b87a;
-          padding:0.2rem 0.85rem;
-          border-radius:50px;
-          font-size:0.7rem;
-          font-weight:600;
-          border:1px solid rgba(253,246,238,0.08);
-          transition: all 0.3s ease;
-          flex-shrink:0;
-          font-family: var(--font-body);
-        }
-        .project-tech-badge:hover{
-          background:#fdf6ee;
-          color:#3d251a;
-          border-color:rgba(61,37,26,0.15);
-          transform:scale(1.05);
-        }
-
-        .project-card-links{display:flex;gap:0.75rem;flex-wrap:wrap}
-        .project-card-links a{
-          display:inline-flex;
-          align-items:center;
-          gap:0.4rem;
-          padding:0.4rem 1.2rem;
-          border-radius:50px;
-          font-size:0.8rem;
-          font-weight:600;
-          transition:var(--transition);
-          text-decoration:none;
-          color:#e8b87a;
-          border:1px solid rgba(253,246,238,0.08);
-          background:rgba(253,246,238,0.04);
-          flex-shrink:0;
-          font-family: var(--font-body);
-        }
-        .project-card-links a:hover{
-          background:linear-gradient(135deg,#e8b87a,#c98545);
-          color:#1a0f0a;
-          border-color:transparent;
-          transform:translateY(-2px);
-        }
-        .project-card-links a:first-child{
-          background:linear-gradient(135deg,#c98545,#e8b87a);
-          color:#1a0f0a;
-          border:none;
-          font-weight:700;
-          box-shadow:0 4px 16px rgba(201,133,69,0.3);
-        }
-        .project-card-links a:first-child:hover{
-          box-shadow:0 6px 28px rgba(201,133,69,0.4);
-          background:linear-gradient(135deg,#d4a055,#f0c88a);
-        }
-
-        .stat-item{
-          background:var(--gradient-glass);
-          border-radius:var(--radius-md);
-          padding:2rem 2rem;
-          border:1px solid var(--glass-border);
-          box-shadow:var(--glass-shadow);
-          text-align:center;
-          transition:var(--transition);
-          color:var(--cream-50);
-          backdrop-filter: blur(10px);
-        }
-        .stat-item:hover{transform:translateY(-6px)scale(1.02);box-shadow:0 24px 80px rgba(26,15,10,0.2)}
-        .stat-number{
-          font-family: var(--font-display);
-          font-size:2.8rem;
-          font-weight:900;
-          line-height:1;
-          margin-bottom:0.25rem;
-          background:linear-gradient(135deg,#fdf6ee,#e8b87a,#c98545);
-          -webkit-background-clip:text;
-          -webkit-text-fill-color:transparent;
-          background-clip:text;
-        }
-        .stat-label{
-          font-size:0.9rem;
-          color:rgba(253,246,238,0.7);
-          font-weight:500;
-        }
-
-        .footer-glass{
-          background:var(--gradient-glass);
-          border-top:1px solid var(--glass-border);
-          padding:2rem 0;
-          margin-top:3rem;
-          backdrop-filter: blur(10px);
-        }
-        .footer-text{
-          font-size:0.9rem;
-          color:rgba(253,246,238,0.7);
-          font-family: var(--font-body);
-        }
-        .heart{
-          color:#e8b87a;
-          display:inline-block;
-          animation:heartBeat 1.5s ease-in-out infinite;
-        }
-        .code-icon{
-          background:linear-gradient(135deg,#fdf6ee,#e8b87a,#c98545);
-          -webkit-background-clip:text;
-          -webkit-text-fill-color:transparent;
-          background-clip:text;
-        }
-
-        .text-muted{color:rgb(226, 185, 138)!important}
-
-        /* ================================================================ */
-        /* ========== RESPONSIVE =========================================== */
-        /* ================================================================ */
-        @media(max-width:992px){
-          .profile-image {
-            width: 190px;
-            height: 240px;
-          }
-          .hero-title {
-            font-size: 2.6rem;
-          }
-          .profile-wrapper {
-            margin-top: 10px;
-          }
-        }
-
-        @media(max-width:768px){
-          .hero-title {
-            font-size: 2.2rem;
-          }
-          .profile-image {
-            width: 170px;
-            height: 215px;
-          }
-          .main-content {
-            padding-top: 85px;
-          }
-          .project-card-img {
-            height: 180px;
-          }
-          .hero-actions {
-            grid-template-columns: 1fr 1fr;
-            gap: 0.6rem;
-            max-width: 100%;
-          }
-          .btn-primary-custom, .btn-outline-custom {
-            padding: 0.6rem 1.5rem;
-            font-size: 0.82rem;
-          }
-          .section-title {
-            font-size: 1.8rem;
-          }
-          .hero-glass {
-            padding: 1rem 1.2rem;
-          }
-          .profile-wrapper {
-            margin-top: 15px;
-          }
-          .skill-tag-wrapper {
-            padding: 0.5rem 1rem 0.5rem 0.8rem;
-            font-size: 0.75rem;
-          }
-          .skill-tag-wrapper .skill-icon {
-            width: 24px;
-            height: 24px;
-            font-size: 0.9rem;
-          }
-          .social-link {
-            width: 40px;
-            height: 40px;
-            font-size: 1rem;
-          }
-        }
-          
-        @media(max-width:576px){
-          .hero-title {
-            font-size: 1.7rem;
-          }
-          .profile-image {
-            width: 140px;
-            height: 180px;
-          }
-          .main-content {
-            padding-top: 75px;
-          }
-          .hero-glass {
-            padding: 0.8rem 0.8rem;
-            border-radius: var(--radius-lg);
-          }
-          .hero-actions {
-            grid-template-columns: 1fr 1fr;
-            gap: 0.5rem;
-          }
-          .btn-primary-custom, .btn-outline-custom {
-            padding: 0.5rem 0.8rem;
-            font-size: 0.7rem;
-            border-radius: 30px;
-          }
-          .btn-primary-custom i, .btn-outline-custom i {
-            font-size: 0.65rem;
-          }
-          .project-card-img {
-            height: 140px;
-          }
-          .project-card-body {
-            padding: 0.8rem;
-          }
-          .project-card-title {
-            font-size: 0.9rem;
-          }
-          .project-card-desc {
-            font-size: 0.75rem;
-          }
-          .project-tech-badge {
-            font-size: 0.6rem;
-            padding: 0.15rem 0.5rem;
-          }
-          .project-card-links a {
-            padding: 0.25rem 0.6rem;
-            font-size: 0.65rem;
-          }
-          .social-link {
-            width: 36px;
-            height: 36px;
-            font-size: 0.9rem;
-          }
-          .stat-number {
-            font-size: 1.8rem;
-          }
-          .stat-item {
-            padding: 1rem 0.8rem;
-          }
-          .section-title {
-            font-size: 1.4rem;
-          }
-          .section-subtitle {
-            font-size: 0.8rem;
-            margin-bottom: 1.5rem;
-          }
-          .skill-tag-wrapper {
-            padding: 0.4rem 0.8rem 0.4rem 0.6rem;
-            font-size: 0.65rem;
-            margin: 0.2rem;
-            gap: 0.3rem;
-          }
-          .skill-tag-wrapper .skill-icon {
-            width: 20px;
-            height: 20px;
-            font-size: 0.75rem;
-          }
-          .footer-text {
-            font-size: 0.7rem;
-          }
-          .profile-wrapper {
-            margin-top: 20px;
-          }
-          .hero-badge {
-            font-size: 0.65rem;
-            padding: 0.3rem 1rem;
-            margin-bottom: 0.8rem;
-          }
-          .hero-subtitle {
-            font-size: 0.85rem;
-            margin-bottom: 1.2rem;
-          }
-        }
-      `}</style>
-      {/* 🔒 HAPUS DUPLIKAT CSS - SUDAH DI INDEX.HTML */}
-      {/* <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" /> */}
-      {/* <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" /> */}
-
-      {/* HAPUS leopard-spots-container - diganti background pattern */}
-
-      <div style={{ position: 'fixed', inset: 0, zIndex: 0, overflow: 'hidden', pointerEvents: 'none' }}>
-        <div className="bg-orb"></div>
-        <div className="bg-orb"></div>
-        <div className="bg-orb"></div>
-      </div>
-
+  return (
+    <div className="site" ref={rootRef}>
       <Navbar />
 
-      <div className="main-content">
-        <section className="hero-section">
-          <div className="container">
-            <div className="hero-glass">
-              <div className="row align-items-center">
-                <div className="col-lg-5 order-1 order-lg-1 text-center mb-4 mb-lg-0">
-                  <div className="profile-wrapper">
-                    <div className="profile-glow"></div>
-                    <div className="profile-border"></div>
-                    <img
-                      src="/assets/hagia.png"
-                      alt="Hagia Sofiana"
-                      className="profile-image"
-                    />
-                    <div className="profile-shimmer"></div>
+      <main>
+        {/* ======================= HERO ======================= */}
+        <section id="home" className="pf-hero" ref={heroRef}>
+          <div className="pf-hero__stage">
+            <h1 className="pf-hero__portfolio" aria-label={`${PROFILE.name}, Portfolio`}>
+              <Letters text="Portfolio" />
+            </h1>
+
+            <ul className="pf-hero__roles" aria-label="What I build">
+              {PROFILE.roles.map((r) => (
+                <li key={r}>{r}</li>
+              ))}
+            </ul>
+
+            <p className="pf-hero__word" aria-hidden="true">
+              <Letters text="DEVELOPER" />
+            </p>
+
+            <figure className={`pf-hero__photo ${PROFILE.photoIsCutout ? 'pf-hero__photo--cutout' : ''}`}>
+              <video
+                ref={heroVideoRef}
+                src="/assets/hagia.mp4"
+                poster="/assets/hagiaS.jpg"
+                aria-label={`${PROFILE.name} video`}
+                muted
+                loop
+                playsInline
+                preload="none"
+                disablePictureInPicture
+                disableRemotePlayback
+                tabIndex="-1"
+                onError={(event) => console.error('Failed to load hero video:', event.currentTarget.error)}
+              />
+            </figure>
+
+            <div className="pf-hero__side">
+              <p className="pf-hero__name">{PROFILE.name}</p>
+              <p className="pf-hero__intro">{PROFILE.intro}</p>
+            </div>
+
+          </div>
+
+          {/* tampil hanya di layar kecil */}
+          <div className="pf-hero__foot">
+            <p className="pf-hero__name">{PROFILE.name}</p>
+            <p className="pf-hero__intro">{PROFILE.intro}</p>
+            <ul className="pf-socials">
+              {SOCIALS.map((s) => (
+                <li key={s.label}>
+                  <a href={s.href} target="_blank" rel="noreferrer" aria-label={s.label}>
+                    <i className={s.icon} aria-hidden="true"></i>
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </section>
+
+        {/* ======================= ABOUT ======================= */}
+        <section id="about" className="pf-about pf-on-cream">
+          <div className="pf-wrap pf-about__grid">
+            <div className="pf-about__left">
+              <h2 className="pf-about__title">About me</h2>
+              <figure className="pf-about__photo">
+                <img src={PROFILE.aboutPhoto || PROFILE.photo} alt={PROFILE.name} loading="lazy" />
+              </figure>
+            </div>
+
+            <div className="pf-about__content">
+              <p className="pf-about__lead">{about.lead}</p>
+              {about.paragraphs.map((p) => (
+                <p className="pf-about__text" key={p}>
+                  {p}
+                </p>
+              ))}
+
+              <dl className="pf-facts">
+                {about.facts.map((f) => (
+                  <div className="pf-facts__row" key={f.label}>
+                    <dt>{f.label}</dt>
+                    <dd>{f.value}</dd>
                   </div>
+                ))}
+                <div className="pf-facts__row">
+                  <dt>Published</dt>
+                  <dd>
+                    {status === 'ready'
+                      ? `${total} projects, built with ${SKILLS.length} technologies`
+                      : `Built with ${SKILLS.length} technologies`}
+                  </dd>
                 </div>
-                <div className="col-lg-7 order-2 order-lg-2">
-                  <div className="hero-content">
-                    <div className="hero-badge">
-                      <i className="fas fa-graduation-cap"></i>
-                      Rekayasa Perangkat Lunak
-                    </div>
-                    <h1 className="hero-title">
-                      <span className="role-text">{roles[roleIndex]}</span><br />
-                      <span className="highlight">Hagia Sofiana</span>
-                    </h1>
-                    <p className="hero-subtitle">{tentang}</p>
-                    <div className="hero-actions">
-                      <Link to="/project" className="btn-primary-custom">
-                        <i className="fas fa-folder-open"></i>View Project
-                      </Link>
-                      <a href="#skills" className="btn-outline-custom">
-                        <i className="fas fa-code"></i>My Skills
-                      </a>
-                    </div>
-                    <div className="social-links">
-                      <a href="https://github.com/ann4yaa" className="social-link" target="_blank" rel="noreferrer"><i className="fab fa-github"></i></a>
-                      <a href="https://www.linkedin.com/in/hagia-sofiana" className="social-link" target="_blank" rel="noreferrer"><i className="fab fa-linkedin-in"></i></a>
-                      <a href="https://www.instagram.com/ann4yaa_" className="social-link" target="_blank" rel="noreferrer"><i className="fab fa-instagram"></i></a>
-                      <a href="https://www.threads.com/@ann4yaa_" className="social-link" target="_blank" rel="noreferrer"><i className="fab fa-threads"></i></a>
-                    </div>
-                  </div>
-                </div>
-              </div>
+              </dl>
             </div>
           </div>
         </section>
 
-        <section style={{ padding: '2rem 0' }}>
-          <div className="container">
-            <div className="row g-3 justify-content-center">
-              <div className="col-6 col-md-3">
-                <div className="stat-item" ref={(el) => { cardRefs.current[0] = el; }}>
-                  <div className="stat-number">{totalProject}+</div>
-                  <div className="stat-label">Projects Completed</div>
-                </div>
-              </div>
-              <div className="col-6 col-md-3">
-                <div className="stat-item" ref={(el) => { cardRefs.current[1] = el; }}>
-                  <div className="stat-number">{skills.length}+</div>
-                  <div className="stat-label">Tech Stack</div>
-                </div>
-              </div>
-            </div>
+        {/* ======================= TECH STACK ======================= */}
+        <section id="skills" className="pf-skills pf-on-cream" aria-labelledby="skills-title">
+          <div className="pf-wrap">
+            <h2 id="skills-title" className="pf-skills__title">Tools I work with</h2>
           </div>
+          <TechMarquee items={SKILLS} />
         </section>
 
-        <section style={{ padding: '3.5rem 0' }} id="skills">
-          <div className="container">
-            <div className="text-center">
-              <h2 className="section-title">Tech <span className="gradient-text">Stack</span></h2>
-              <div className="section-divider"></div>
-              <p className="section-subtitle">Building with Modern Technologies</p>
-            </div>
-            <div className="text-center">
-              {skills.map((skill, i) => {
-                const iconMap = {
-                  'HTML': 'fa-brands fa-html5',
-                  'CSS': 'fa-brands fa-css3-alt',
-                  'JavaScript': 'fa-brands fa-js',
-                  'PHP': 'fa-brands fa-php',
-                  'MySQL': 'fa-solid fa-database',
-                  'Python': 'fa-brands fa-python',
-                  'Bootstrap': 'fa-brands fa-bootstrap',
-                  'Java': 'fa-brands fa-java',
-                  'React': 'fa-brands fa-react',
-                  'Vite': 'fa-solid fa-bolt'
-                };
-                return (
-                  <span className="skill-tag-wrapper" key={i} ref={(el) => { cardRefs.current[i + 2] = el; }}>
-                    <span className="skill-icon">
-                      <i className={iconMap[skill] || 'fa-solid fa-code'}></i>
-                    </span>
-                    <span>{skill}</span>
-                  </span>
-                );
-              })}
-            </div>
-          </div>
-        </section>
-
-        <section style={{ padding: '3.5rem 0' }}>
-          <div className="container">
-            <div className="text-center">
-              <h2 className="section-title">Latest <span className="gradient-text">Project</span></h2>
-              <div className="section-divider"></div>
-              <p className="section-subtitle">Some of the projects I've worked on</p>
+        {/* ======================= PROJECTS ======================= */}
+        <section className="pf-projects pf-on-cream">
+          <div className="pf-wrap">
+            <div id="projects" className="pf-projects__head">
+              <h2 className="pf-h2">Latest projects</h2>
+              {status === 'ready' && total > 0 && (
+                <Link to="/project" className="pf-more">
+                  See all {total} projects
+                  <i className="fas fa-arrow-right" aria-hidden="true"></i>
+                </Link>
+              )}
             </div>
 
-            {recentProjects.length > 0 ? (
-              <>
-                <div className="row g-4">
-                  {recentProjects.map((project, i) => {
-                    const teknologiList = Array.isArray(project.teknologi)
-                      ? project.teknologi
-                      : (project.teknologi ? project.teknologi.split('|') : []);
-
-                    return (
-                      <div className="col-md-4 col-sm-6 col-12" key={project.id}>
-                        <div className="project-card h-100" ref={(el) => { cardRefs.current[i + 12] = el; }}>
-                          {project.gambar ? (
-                            <img src={`/assets/uploads/${project.gambar}`} alt={project.nama_project} className="project-card-img" />
-                          ) : (
-                            <div className="project-card-img d-flex align-items-center justify-content-center"
-                              style={{ background: 'linear-gradient(145deg,#f5e8d8 0%,#fdf6ee 100%)' }}>
-                              <i className="fas fa-image" style={{ fontSize: '3rem', color: '#5a3828' }}></i>
-                            </div>
-                          )}
-                          <div className="project-card-body">
-                            {/* 🔒 SANITASI DENGAN DOMPurify */}
-                            <h5 className="project-card-title">
-                              {DOMPurify.sanitize(project.nama_project)}
-                            </h5>
-                            <p className="project-card-desc">
-                              {DOMPurify.sanitize(project.deskripsi)}
-                            </p>
-                            <div className="project-tech">
-                              {teknologiList.slice(0, 3).map((t, j) => (
-                                <span className="project-tech-badge" key={j}>
-                                  {DOMPurify.sanitize(t)}
-                                </span>
-                              ))}
-                              {teknologiList.length > 3 && (
-                                <span className="project-tech-badge">+{teknologiList.length - 3}</span>
-                              )}
-                            </div>
-                            <div className="project-card-links">
-                              {project.github && (
-                                <a href={DOMPurify.sanitize(project.github)} target="_blank" rel="noreferrer">
-                                  <i className="fab fa-github me-1"></i><span>GitHub</span>
-                                </a>
-                              )}
-                              {project.demo && (
-                                <a href={DOMPurify.sanitize(project.demo)} target="_blank" rel="noreferrer">
-                                  <i className="fas fa-external-link-alt me-1"></i><span>Demo</span>
-                                </a>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-                <div className="text-center mt-4">
-                  <Link to="/project" className="btn-primary-custom" style={{ width: 'auto', padding: '0.85rem 2.6rem' }}>
-                    View All Projects <i className="fas fa-arrow-right ms-2"></i>
-                  </Link>
-                </div>
-              </>
-            ) : (
-              <div className="text-center py-5">
-                <i className="fas fa-inbox" style={{ fontSize: '3rem', color: '#5a3828' }}></i>
-                <p className="text-muted mt-3">More projects coming soon</p>
+            {status === 'loading' && <ProjectCardSkeleton />}
+            {status === 'error' && (
+              <p className="pf-empty">Projects could not be loaded. Refresh the page to try again.</p>
+            )}
+            {status === 'ready' && projects.length === 0 && (
+              <p className="pf-empty">No projects published yet.</p>
+            )}
+            {status === 'ready' && projects.length > 0 && (
+              <div className="pf-projects__grid">
+                {projects.map((p) => (
+                  <ProjectCard key={p.id} project={p} tone="dark" clamp maxTags={3} />
+                ))}
               </div>
             )}
           </div>
         </section>
-      </div>
 
-      <footer className="footer-glass">
-        <div className="container">
-          <div className="text-center footer-text">
-            <span className="code-icon"><i className="fas fa-code me-1"></i></span> Full Stack Developer{' '}
-            <span className="heart"><i className="fas fa-heart"></i></span>{' '}
-            Hagia Sofiana &bull; {new Date().getFullYear()}
+        {/* ======================= CONTACT ======================= */}
+        <section id="contact" className="pf-contact">
+          <div className="pf-wrap pf-contact__grid">
+            <div>
+              <h2 className="pf-contact__title">Have a project or a role in mind?</h2>
+              <p className="pf-contact__note">
+                Send a message and it goes straight to me. I reply by email.
+              </p>
+              <ul className="pf-contact__links">
+                {SOCIALS.map((s) => (
+                  <li key={s.label}>
+                    <a href={s.href} target="_blank" rel="noreferrer">
+                      <i className={s.icon} aria-hidden="true"></i>
+                      {s.label}: {s.handle}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            <ContactForm />
           </div>
-        </div>
-      </footer>
-    </>
+        </section>
+      </main>
+
+      <Footer />
+    </div>
   );
 }

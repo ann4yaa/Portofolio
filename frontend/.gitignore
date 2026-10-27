@@ -42,3 +42,13 @@ backups/
 
 # Package-lock (optional, terserah)
 # package-lock.json
+.vercel
+.env*
+!.env.example
+
+# Secret keys and local credentials
+*.pem
+*.key
+*.p12
+*.pfx
+secrets/

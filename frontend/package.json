@@ -7,7 +7,9 @@
     "bootstrap": "^5.3.0",
     "crypto-js": "^4.2.0",
     "dompurify": "^3.4.11",
+    "dotenv": "^18.0.8",
     "express": "^4.18.2",
+    "gsap": "^3.15.0",
     "multer": "^1.4.5-lts.1",
     "mysql2": "^3.6.0",
     "react": "^18.2.0",
@@ -22,6 +24,8 @@
     "server": "node server.js",
     "dev": "concurrently -k \"npm:server\" \"npm:start\"",
     "serve": "node server.js",
+    "export:projects": "node scripts/export-projects.js",
+    "publish": "npm run build && vercel --prod",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
   },

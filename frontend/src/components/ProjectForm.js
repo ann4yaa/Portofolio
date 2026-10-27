@@ -1,93 +1,74 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 
+// Tema admin: dark maroon + light cream, background tekstur bunga yang sama dengan website.
 export const CHOCO_FORM_CSS = `
   :root {
-    --choco-900: #24140f;
-    --choco-800: #321c14;
-    --choco-700: #4a2a1d;
-    --cream-50: #fff8ed;
-    --cream-100: #f6ead7;
-    --cream-200: #ead5b8;
-    --caramel: #c98545;
+    --maroon-950: #1d0609;
+    --maroon-900: #2c0a10;
+    --maroon-800: #4a0f18;
+    --maroon-700: #621620;
+    --maroon-600: #7d1d2a;
+    --cream-50: #fcf2e6;
+    --cream-100: #f6e7d6;
+    --cream-200: #ead5ba;
     --transition: all 0.3s ease;
   }
   body{
     background:
-      radial-gradient(circle at 18% 10%, rgba(201, 133, 69, 0.16), transparent 30%),
-      radial-gradient(circle at 84% 92%, rgba(74, 42, 29, 0.12), transparent 28%),
-      linear-gradient(180deg, #fff8ed 0%, #f6ead7 100%);
+      linear-gradient(180deg, rgba(29,6,9,0.5), rgba(29,6,9,0.8)),
+      url('/assets/bg-floral.jpg') center / cover fixed no-repeat,
+      #2c0a10;
     min-height:100vh;
-    color:#fff8ed;
+    color:#fcf2e6;
     position:relative;
     overflow-x:hidden;
   }
-  body::before{
-    content:'';
-    position:fixed;
-    inset:0;
-    z-index:0;
-    pointer-events:none;
-    background:
-      radial-gradient(ellipse at 18% 18%, rgba(36,20,15,0.28) 0 7px, rgba(201,133,69,0.26) 8px 15px, transparent 16px),
-      radial-gradient(ellipse at 72% 28%, rgba(74,42,29,0.24) 0 6px, rgba(201,133,69,0.22) 7px 13px, transparent 14px),
-      radial-gradient(ellipse at 36% 74%, rgba(36,20,15,0.22) 0 5px, rgba(201,133,69,0.20) 6px 12px, transparent 13px);
-    background-size:145px 130px,175px 155px,190px 170px;
-    opacity:0.72;
-    mask-image:
-      radial-gradient(circle at 0 0, #000 0 20%, transparent 36%),
-      radial-gradient(circle at 100% 0, #000 0 20%, transparent 36%),
-      radial-gradient(circle at 0 100%, #000 0 20%, transparent 36%),
-      radial-gradient(circle at 100% 100%, #000 0 20%, transparent 36%);
-    -webkit-mask-image:
-      radial-gradient(circle at 0 0, #000 0 20%, transparent 36%),
-      radial-gradient(circle at 100% 0, #000 0 20%, transparent 36%),
-      radial-gradient(circle at 0 100%, #000 0 20%, transparent 36%),
-      radial-gradient(circle at 100% 100%, #000 0 20%, transparent 36%);
-  }
   .container{position:relative;z-index:1}
   .glass-card{
-    background:linear-gradient(145deg, rgba(50,28,20,0.94), rgba(36,20,15,0.90));
+    background:rgba(44,10,16,0.88);
+    -webkit-backdrop-filter:blur(14px);
+    backdrop-filter:blur(14px);
     border-radius:20px;
-    border:1px solid rgba(255,248,237,0.16);
-    box-shadow:0 24px 80px rgba(36,20,15,0.18), inset 0 1px 0 rgba(255,248,237,0.12);
+    border:1px solid rgba(252,242,230,0.18);
+    box-shadow:0 24px 80px rgba(0,0,0,0.35), inset 0 1px 0 rgba(252,242,230,0.1);
     padding:2rem;
   }
-  .glass-card h3{color:#fff8ed}
-  .glass-card h3 i{color:var(--caramel)}
-  .form-label,.form-check-label,small{color:rgba(255,248,237,0.78)!important}
+  .glass-card h3{color:#fcf2e6}
+  .glass-card h3 i{color:var(--cream-200)}
+  .form-label,.form-check-label,small{color:rgba(252,242,230,0.82)!important}
   .form-control,.form-control:focus{
-    background:rgba(255,248,237,0.10);
-    border-color:rgba(255,248,237,0.18);
-    color:#fff8ed;
+    background:rgba(252,242,230,0.1);
+    border-color:rgba(252,242,230,0.22);
+    color:#fcf2e6;
     border-radius:8px;
     padding:0.6rem 1rem;
   }
-  .form-control::placeholder{color:rgba(255,248,237,0.45)}
-  .form-control:focus{box-shadow:0 0 0 0.2rem rgba(201,133,69,0.25);outline:none}
-  select.form-control option{background:#321c14;color:#fff8ed}
+  .form-control::placeholder{color:rgba(252,242,230,0.45)}
+  .form-control:focus{box-shadow:0 0 0 0.2rem rgba(252,242,230,0.22);outline:none}
+  select.form-control option{background:#2c0a10;color:#fcf2e6}
   .form-check-input{
-    background-color:rgba(255,248,237,0.12);
-    border-color:rgba(255,248,237,0.26);
+    background-color:rgba(252,242,230,0.12);
+    border-color:rgba(252,242,230,0.3);
   }
   .form-check-input:checked{
-    background-color:var(--caramel);
-    border-color:var(--caramel);
+    background-color:var(--cream-50);
+    border-color:var(--cream-50);
   }
   .form-check-input:focus{
-    border-color:var(--caramel);
-    box-shadow:0 0 0 0.2rem rgba(201,133,69,0.24);
+    border-color:var(--cream-50);
+    box-shadow:0 0 0 0.2rem rgba(252,242,230,0.22);
   }
   .current-img{
     max-width:200px;
     border-radius:12px;
-    border:2px solid rgba(255,248,237,0.22);
-    box-shadow:0 14px 34px rgba(0,0,0,0.20);
+    border:2px solid rgba(252,242,230,0.25);
+    box-shadow:0 14px 34px rgba(0,0,0,0.3);
   }
   .btn-save{
-    background:linear-gradient(135deg, #fff2d8, #c98545);
+    background:var(--cream-50);
     border:none;
-    color:#24140f;
+    color:#1d0609;
     font-weight:700;
     padding:0.5rem 2rem;
     border-radius:14px;
@@ -97,11 +78,12 @@ export const CHOCO_FORM_CSS = `
     align-items:center;
     gap:0.4rem;
   }
-  .btn-save:hover{background:linear-gradient(135deg, #ffe7bc, #b87535);color:#24140f}
+  .btn-save:hover{background:var(--cream-200);color:#1d0609}
+  .btn-save:disabled{opacity:0.65;cursor:progress}
   .btn-cancel{
-    background:rgba(255,248,237,0.08);
-    border:1px solid rgba(255,248,237,0.38);
-    color:#fff8ed;
+    background:rgba(252,242,230,0.08);
+    border:1px solid rgba(252,242,230,0.4);
+    color:#fcf2e6;
     font-weight:700;
     padding:0.5rem 2rem;
     border-radius:14px;
@@ -111,13 +93,13 @@ export const CHOCO_FORM_CSS = `
     align-items:center;
     gap:0.4rem;
   }
-  .btn-cancel:hover{background:rgba(255,248,237,0.12);color:#fff8ed}
+  .btn-cancel:hover{background:rgba(252,242,230,0.16);color:#fcf2e6}
   .mb-3{margin-bottom:1rem}
   .mb-4{margin-bottom:1.5rem}
   .row.g-2{--bs-gutter-x:0.5rem;--bs-gutter-y:0.5rem}
   .form-check{display:flex;align-items:center;gap:0.4rem;padding:0.2rem 0}
   .d-flex.gap-2{display:flex;gap:0.5rem;flex-wrap:wrap}
-  .text-light{color:rgba(255,248,237,0.68)!important}
+  .text-light{color:rgba(252,242,230,0.7)!important}
 `;
 
 export default function ProjectForm({ title, icon, onSubmit, loading, children }) {

@@ -13,6 +13,8 @@ body {
   -moz-osx-font-smoothing: grayscale;
   background: #fff8ed;
   min-height: 100vh;
+  min-height: 100svh;
+  min-height: 100svh;
 }
 
 code {
@@ -120,11 +122,6 @@ code {
     opacity: 1;
     transform: translateY(0);
   }
-}
-
-/* Smooth Transitions */
-* {
-  transition: all 0.3s ease;
 }
 
 /* Print Styles */

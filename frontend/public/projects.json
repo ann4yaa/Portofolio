@@ -1,0 +1,38 @@
+[
+  {
+    "id": 6,
+    "nama_project": "Web School - Skariga",
+    "kategori_id": 1,
+    "kategori": "Website",
+    "deskripsi": "Official school website with public pages for admissions, majors, and school news, plus an admin dashboard for managing content.",
+    "gambar": "/assets/uploads/1792323534979_7fp307lwclp.png",
+    "github": "",
+    "demo": "https://smkpgri3malang.my.id/",
+    "teknologi": [],
+    "created_at": "2026-10-18T11:38:55.000Z"
+  },
+  {
+    "id": 5,
+    "nama_project": "Orbii - Club Hobi",
+    "kategori_id": 1,
+    "kategori": "Website",
+    "deskripsi": "A hobby club platform where people can discover clubs, join events, and connect with others who share the same interests.",
+    "gambar": "/assets/uploads/1792238359443_gcokrv4q70f.png",
+    "github": "https://github.com/Brian772/Club-Hobi",
+    "demo": "https://orbii.web.id",
+    "teknologi": [],
+    "created_at": "2026-10-17T11:59:19.000Z"
+  },
+  {
+    "id": 4,
+    "nama_project": "MayTask",
+    "kategori_id": 1,
+    "kategori": "Website",
+    "deskripsi": "A task management app that helps you organize your work and stay on top of every deadline.",
+    "gambar": "/assets/uploads/1783387954223_n1tg9mbwfn.png",
+    "github": "https://github.com/ann4yaa/TaskLibrary",
+    "demo": "http://mytasklibrary.kesug.com/landing.php",
+    "teknologi": [],
+    "created_at": "2026-07-07T01:32:34.000Z"
+  }
+]
